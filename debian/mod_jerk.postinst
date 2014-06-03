@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo Enabling mod_jerk in Apache conf ...
+a2enmod jerk
+echo Done
+
+echo Restarting Apache ...
+apache2ctl restart
+echo Done
+
+#DEBHELPER#

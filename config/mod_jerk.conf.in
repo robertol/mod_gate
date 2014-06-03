@@ -1,0 +1,1 @@
+LoadModule jerk_module ${APACHE_MODULES_DIR}/mod_jerk.so

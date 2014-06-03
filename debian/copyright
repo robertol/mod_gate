@@ -1,0 +1,19 @@
+This package was debianized by Michael Owens <mike@owens.io> on
+Mon, 22 Sep 2014 12:12:31 -0500
+
+It was downloaded from http://github.com/linterra/rsp
+
+Upstream Author: 
+
+    Michael Owens <mike@owens.io>
+
+Copyright: 
+
+    Copyright (C) 2013 Michael Owens
+
+License:
+
+    Apache License 2.0
+
+The Debian packaging is (C) 2015, Michael Owens <mike@owens.io> and is licensed
+under the GPL, see `/usr/share/common-licenses/GPL'.

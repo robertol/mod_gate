@@ -1,0 +1,1 @@
+LoadModule jerk_module /usr/lib/apache2/modules/mod_jerk.so
