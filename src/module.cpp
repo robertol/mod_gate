@@ -276,23 +276,19 @@ modjerk::Handler jerk_request_get_handler(request_rec* r)
     }
     else
     {
-        log_error(req.pool(), "JERK: JerkFilter defined");
-
         if(notes.get("JerkFilterDatabase") != NULL)
         {
             database = notes.get("JerkDefaultDatabase");
         }
 
-        if(database == NULL)
+        if(database != NULL)
         {
-            std::logic_error e("Default database is not defined.");
-            throw e;
+            // Add this for reference -- it is associated with the request
+            notes.set("JerkFilterDatabase", database);
         }
 
-        // Add this for reference -- it is associated with the request
-        notes.set("JerkFilterDatabase", database);
-
-        return modjerk::Handler(database);
+        //std::logic_error e("Default database is not defined.");
+        //throw e;
     }
     
     // Empty handler -- signifies error

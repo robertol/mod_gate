@@ -48,7 +48,7 @@ static void register_hooks(apr_pool_t *p)
 }
 
 static const char* 
-set_jerk_default_handler_module(cmd_parms *parms, void* config, const char* arg)
+set_jerk_default_database(cmd_parms *parms, void* config, const char* arg)
 {
     if(arg == NULL)
     {
@@ -104,9 +104,9 @@ set_jerk_config_var( cmd_parms *parms,
 
 static const char* 
 set_jerk_env_var( cmd_parms* parms, 
-                 void* config, 
-                 const char* arg1,
-                 const char* arg2 )
+                  void* config, 
+                  const char* arg1,
+                  const char* arg2 )
 {
     if(arg1 == NULL)
     {
@@ -161,7 +161,7 @@ set_jerk_filter(cmd_parms *parms, void* config, const char* arg)
     }
     
     jerk_dir_config* dir_config = (jerk_dir_config*)config;
-    apr_table_set(dir_config->options, "JerkHandler", (char*)arg);
+    apr_table_set(dir_config->options, "JerkFilter", (char*)arg);
 
     /* Success */
     return NULL;
@@ -262,7 +262,7 @@ static const command_rec mod_jerk_cmds[] =
 {
     AP_INIT_TAKE1(
         "JerkDefaultDatabase",
-        set_jerk_default_handler_module,
+        set_jerk_default_database,
         NULL,
         RSRC_CONF | OR_ALL,
         "JerkDatabase <string> "
@@ -301,7 +301,7 @@ static const command_rec mod_jerk_cmds[] =
         set_jerk_filter_declare,
         NULL,
         RSRC_CONF,
-        "JerkHandlerDeclare {name} "
+        "JerkFilterDeclare {name} "
         "-- declare a custom Jerk handler."
     ),
 
@@ -372,7 +372,7 @@ static void* merge_dir_conf(apr_pool_t* pool, void* current_config, void* new_co
     apr_table_compress(dir_merged->options, APR_OVERLAP_TABLES_SET);
 
     /* Debugging
-    const char* handler = apr_table_get(dir_merged->options, "JerkHandler");
+    const char* handler = apr_table_get(dir_merged->options, "JerkFilter");
 
     ap_log_perror(APLOG_MARK, APLOG_WARNING, 
                   0, pool, "Dir %x %s->%s Handler: %s ", 
