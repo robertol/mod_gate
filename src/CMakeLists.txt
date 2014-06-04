@@ -103,6 +103,14 @@ set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
 endif()
 
 #-------------------------------------------------------------------------------
+# jerkdb command line program
+#-------------------------------------------------------------------------------
+
+# Shared lib version
+add_executable(jerkdb jerkdb.cpp sqlite.cpp getopt_long.c sqlite3.c)
+target_link_libraries(jerkdb ${OS_LIBS} )
+
+#-------------------------------------------------------------------------------
 # Installation
 #-------------------------------------------------------------------------------
 

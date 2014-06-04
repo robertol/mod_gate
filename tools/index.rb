@@ -37,5 +37,6 @@ q1.exec().each do |row|
     q2.exec "update ip set #{fields} where id=#{id}"
   end
   
-  q1.exec 'COMMIT'
 end
+
+q1.exec 'COMMIT'

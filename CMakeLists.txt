@@ -11,7 +11,7 @@ set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 include(CheckIncludeFiles)
 
 # MODJERK
-set( MODJERK_MAJ_V 3 )
+set( MODJERK_MAJ_V 0 )
 set( MODJERK_MIN_V 0 )
 set( MODJERK_PL    0 )
 set( MODJERK_CL      )

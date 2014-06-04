@@ -2,8 +2,11 @@
 
 ## About
 
-This is an Apache module designed for dealing with jerks on the Internet. It is
-written from scratch specifically for Apache 2.x.
+This is an Apache module designed for dealing with jerks on the Internet. Withit
+you can blacklist IP ranges and User Agents, responding with whatever HTTP
+status code you like. All the lists are stored in a SQLite database.
+
+It is written from scratch specifically for Apache 2.x.
 
 It works using an SQLite database which contains block lists. There are two
 lists so far: IP blocks and User Agents. The IP block table contains an IP range
