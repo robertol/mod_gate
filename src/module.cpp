@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <stdexcept>
 
 #include "request.h"
 #include "connection.h"
@@ -21,12 +22,51 @@ APLOG_USE_MODULE();
 
 using namespace std;
 
-// SQLite database handle for connecting to filter database
-
-static sqlite::Database* database;
-
 using namespace modjerk;
 using namespace sqlite;
+
+modjerk::Handler::Handler(const char* database) 
+    : my_database(NULL), my_error_message()
+{
+    if(database != NULL)
+    {
+        my_database_path = database;
+    }    
+}
+
+modjerk::Handler::~Handler()
+{
+    if(my_database != NULL)
+    {
+        delete my_database;
+        my_database == NULL;
+    }   
+}
+
+bool modjerk::Handler::connect()
+{    
+    // Initialize the database
+    sqlite3* sqlite_db_handle;
+    int rc = sqlite3_open(my_database_path.c_str(), &sqlite_db_handle);
+    
+    if(rc)
+    {
+        stringstream strm;
+        strm << Database::error(sqlite_db_handle, "Can't open database: ")
+             << my_database_path;
+        
+        my_error_message = strm.str();
+
+        // Close DB
+        sqlite3_close(sqlite_db_handle);
+
+        return false;
+    }
+
+    my_database = new Database(sqlite_db_handle);
+
+    return true;
+}
 
 void log_message(apr_pool_t* pool, int level, const char* message)
 {
@@ -55,51 +95,11 @@ int jerk_init_module(apr_pool_t* p, server_rec* server)
 
     int x = getpid();
 
-    //> Get the module configuration
-    // jerk_config* cfg = jerk_server_config(server->module_config);
-
-    // Initialize the database
-    const char* db_path = "/etc/apache2/jerk.db";
-    sqlite3* sqlite_db_handle;
-    int rc = sqlite3_open(db_path, &sqlite_db_handle);
-        
-    if(rc)
-    {
-        // Close DB
-        sqlite3_close(sqlite_db_handle);
-
-        // Create error message                
-        //fprintf(stderr, "Database Exception: %s\n", status_text);
-        
-        stringstream strm;
-        strm << "FATAL ERROR: "
-             << Database::error(sqlite_db_handle, "Can't open database: ")
-             << db_path;
-
-        log_error(p, strm.str().c_str());
-        
-        return 1;
-    }
-    else
-    {
-        ap_log_perror( APLOG_MARK, APLOG_NOTICE, 0, p, 
-                       "mod_jerk[%i]: connected to %s", 
-                       getpid(), db_path);            
-    }
-
-    database = new Database(sqlite_db_handle);
-
     return 0;
 }
 
 int jerk_shutdown_module()
 {
-    if(database != NULL)
-    {
-        delete database;
-        database == NULL;
-    }
-
     return 0;
 }
 
@@ -195,32 +195,18 @@ int jerk_request_init_configuration(request_rec* r)
     // dir_config exists, it will overwrite the server_config.
 
     // Module
-    if(!merge_var(r, dir_cfg, notes, "JerkDefaultHandlerModule", cfg->default_handler_module))
+    if(!merge_var(r, dir_cfg, notes, "JerkDefaultDatabase", cfg->default_database))
     {
-        //jerk_log_error(r, APLOG_CRIT, "JerkDefaultHandlerModule not defined.");
+        //jerk_log_error(r, APLOG_CRIT, "JerkDefaultDatabase not defined.");
         //return -1;
     }
     
-    // Class
-    if(!merge_var(r, dir_cfg, notes, "JerkDefaultHandlerClass", cfg->default_handler_class))
-    {
-        //jerk_log_error(r, APLOG_CRIT, "JerkDefaultHandlerClass not defined.");
-        //return -1;
-    }
-    
-    // Method
-    if(!merge_var(r, dir_cfg, notes, "JerkDefaultHandlerMethod", cfg->default_handler_method))
-    {
-        //jerk_log_error(r, APLOG_CRIT, "JerkDefaultHandlerMethod not defined.");
-        //return -1;
-    }
-
-    // JerkHandler is optional.
-    if(merge_var(r, dir_cfg, notes, "JerkHandler", cfg->handler))
+    // JerkFilter is optional.
+    if(merge_var(r, dir_cfg, notes, "JerkFilter", cfg->handler))
     {
         // It is defined. So merge all of the handler's settings into the notes
         // table.
-        apr_hash_t* h_config = jerk_handler_config(r, notes.get("JerkHandler"));
+        apr_hash_t* h_config = jerk_handler_config(r, notes.get("JerkFilter"));
 
         if(h_config != NULL)
         {
@@ -233,6 +219,18 @@ int jerk_request_init_configuration(request_rec* r)
             {
                 apr_hash_this(hi, (const void **)&key, &klen, (void **)&data);                
                 notes.set(key, data);
+
+                // Check that path exists and file can be read
+                if((string)key == "JerkFilterDatabase")
+                {
+                    if(access(data, R_OK) != 0)
+                    {
+                        jerk_log_error( r, 
+                                        APLOG_CRIT, 
+                                        "JerkDefaultDatabase unreadable or does not exists." );
+                        return -1;                        
+                    }
+                }
             }
         }
     }
@@ -240,73 +238,195 @@ int jerk_request_init_configuration(request_rec* r)
     return 0;
 }
 
-int jerk_request_handler( request_rec* r)
+// Gets selected handler
+modjerk::Handler jerk_request_get_handler(request_rec* r)
 {
+    /* Handler resolution. Look for JerkHandler directive in dir_config or
+    ** server_config. Handler must be a registered CustomHandler. If not
+    ** present, use JerkDefaultHandler.
+    **
+    ** Handler can be in server or dir config. dir overrides server.
+    */
+
     apache::Request req(r);
 
-    //req.setup_cgi();
-    
-    apache::Connection con(req.connection());
+    log_error(req.pool(), "JERK: jerk_request_get_handler()");
 
-    apr::table headers = req.headers_in();
+    // This contains all the configuration options
+    apr::table notes = req.notes();
 
-    const char* user_agent = headers.get("User-Agent");
+    jerk_config* cfg = jerk_server_config(r->server->module_config);
 
-    if(user_agent == NULL)
+    // Use default server config
+    const char* database = cfg->default_database;
+
+    // Check for JerkFilter
+    if(notes.get("JerkFilter") != NULL)
     {
-        user_agent = "NIL";
+        apr_hash_t* h_config;
+        h_config = jerk_handler_config(r, notes.get("JerkFilter"));
+
+        // If it doesn't exist
+        if(h_config != NULL)
+        {
+            database = (const char*)apr_hash_get( h_config, 
+                                                  "JerkFilterDatabase", 
+                                                  APR_HASH_KEY_STRING );
+
+            return modjerk::Handler(database);
+        }
     }
-
-    //> Process the request
-
-    struct in_addr ipvalue;
-    if(inet_pton(AF_INET, con.remote_ip(), &ipvalue) != 1)
+    else
     {
-        ap_log_error( APLOG_MARK, APLOG_CRIT, 0, r->server, 
-                      "mod_jerk[%i]: inet_pton failed() ip=%s", 
-                      getpid(), con.remote_ip());
+        log_error(req.pool(), "JERK: JerkFilter defined");
 
-        return DECLINED;
+        if(notes.get("JerkFilterDatabase") != NULL)
+        {
+            database = notes.get("JerkDefaultDatabase");
+        }
+
+        if(database == NULL)
+        {
+            std::logic_error e("Default database is not defined.");
+            throw e;
+        }
+
+        // Add this for reference -- it is associated with the request
+        notes.set("JerkFilterDatabase", database);
+
+        return modjerk::Handler(database);
     }
-
-    // Convert to network byte order
-    uint32_t addr = htonl(ipvalue.s_addr);
-
-    // Log error (critical)
-    ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
-                  "mod_jerk[%i]: remote ip:=%s (%u) agent: %s", 
-                  getpid(), con.remote_ip(), addr, user_agent );
-
-    // Look for IP match
-
-    std::stringstream sql;
-
-    // Select all queues
-    sql << "SELECT id, http_code, http_message FROM ip "
-        << "WHERE start>=" << addr << " "
-        << "AND end<=" << addr << " "
-        << "LIMIT 1";
     
-    Query query(database->handle());
-    query.prepare(sql.str().c_str());
+    // Empty handler -- signifies error
+    return modjerk::Handler();
+}
 
-    while(query.step() == SQLITE_ROW)
+int jerk_request_handler(request_rec* r)
+{
+    apache::Request req(r);
+    
+    try
     {
-        int32_t record_id = sqlite3_column_int(query.stmt, 0);
-        int32_t http_code = sqlite3_column_int(query.stmt, 1);
-        req.set_status(http_code);
+        // Load configuration
+        if(jerk_request_init_configuration(r) != 0)
+        {
+            log_error(req.pool(), "JERK Handler: No configuration defined");
 
+            // Configuration failed
+            return DECLINED;
+        }
+   
+        modjerk::Handler handler = jerk_request_get_handler(r);
+
+        if(handler.databaseFile() == NULL)
+        {
+            log_error(req.pool(), "JERK Handler: No database defined");
+
+            return DECLINED;
+        }
+
+        if(handler.connect() == false)
+        {
+            // Create error message                
+            //fprintf(stderr, "Database Exception: %s\n", status_text);
+        
+            stringstream strm;
+            strm << "FATAL ERROR: " << handler.error();
+
+            log_error(req.pool(), strm.str().c_str());
+            
+            return 1;
+        }
+        else
+        {
+            ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
+                          "mod_jerk[%i]: connected to %s", 
+                          getpid(), handler.databaseFile());            
+        }
+        
+        apache::Connection con(req.connection());
+        apr::table headers = req.headers_in();
+        
+        const char* user_agent = headers.get("User-Agent");
+
+        if(user_agent == NULL)
+        {
+            user_agent = "NIL";
+        }
+
+        //> Process the request
+        
+        struct in_addr ipvalue;
+        if(inet_pton(AF_INET, con.remote_ip(), &ipvalue) != 1)
+        {
+            ap_log_error( APLOG_MARK, APLOG_CRIT, 0, r->server, 
+                          "mod_jerk[%i]: inet_pton failed() ip=%s", 
+                          getpid(), con.remote_ip());
+            
+            return DECLINED;
+        }
+        
+        // Convert to network byte order
+        uint32_t addr = htonl(ipvalue.s_addr);
+        
+        // Log error (critical)
         ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
-                      "mod_jerk[%i]: remote ip:=%s Blocked record=%i: HTTPCODE=%i", 
-                      getpid(), con.remote_ip(), record_id, http_code);
-
-        const unsigned char* text = sqlite3_column_text(query.stmt, 2);
-
-        return http_code;
+                      "mod_jerk[%i]: remote ip:=%s (%u) agent: %s", 
+                      getpid(), con.remote_ip(), addr, user_agent );
+        
+        // Look for IP match
+        
+        std::stringstream sql;
+        
+        // Select all queues
+        sql << "SELECT id, http_code, http_message FROM ip "
+            << "WHERE start>=" << addr << " "
+            << "AND end<=" << addr << " "
+            << "LIMIT 1";
+        
+        Query query(handler.database()->handle());
+        query.prepare(sql.str().c_str());
+        
+        while(query.step() == SQLITE_ROW)
+        {
+            int32_t record_id = sqlite3_column_int(query.stmt, 0);
+            int32_t http_code = sqlite3_column_int(query.stmt, 1);
+            req.set_status(http_code);
+            
+            ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
+                          "mod_jerk[%i]: remote ip:=%s Match record=%i: HTTPCODE=%i", 
+                          getpid(), con.remote_ip(), record_id, http_code);
+            
+            const unsigned char* text = sqlite3_column_text(query.stmt, 2);
+            
+            if(http_code == 200)
+            {
+                // Allow request processing to proceed.
+                return DECLINED;
+            }
+            
+            // Stop it here
+            return OK;
+        }
+        
+        query.finalize();
     }
-
-    query.finalize();
-    
+    catch(const std::exception &e)
+    {
+        // Create a C++ request object, for convenience
+        apache::Request request(r);
+        
+        // Print error to content
+        request.rprintf("mod_jerk Error: %s", e.what());
+        
+        // Log error (critical)
+        ap_log_error( APLOG_MARK, APLOG_CRIT, 0, r->server, 
+                      "mod_jerk[%i] : %s", 
+                      getpid(), e.what() );
+        
+        return OK;
+    }
+        
     // We are not doing anything
     return DECLINED;
 }

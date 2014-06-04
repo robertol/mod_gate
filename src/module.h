@@ -15,10 +15,8 @@ This structure holds the configuration parameters in the Apache module.
 */
 typedef struct jerk_config
 {
-    char* handler;                 ///< Current handler selected for given request
-    char* default_handler_module;  ///< Default handler Jerk module
-    char* default_handler_class;   ///< Default handler Jerk class
-    char* default_handler_method;  ///< Default handler Jerk method (handler)
+    char* handler;                  ///< Current handler selected for given request
+    char* default_database; ///< Default handler database
 
     apr_table_t* options;          ///< Apache handler user-defined options to pass in
     apr_hash_t* handlers;          ///< User-defined Apache handlers 

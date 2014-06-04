@@ -48,9 +48,7 @@ static void register_hooks(apr_pool_t *p)
 }
 
 static const char* 
-set_jerk_default_handler_module( cmd_parms *parms, 
-                                void* config, 
-                                const char* arg )
+set_jerk_default_handler_module(cmd_parms *parms, void* config, const char* arg)
 {
     if(arg == NULL)
     {
@@ -63,69 +61,13 @@ set_jerk_default_handler_module( cmd_parms *parms,
         jerk_config* cfg = ap_get_module_config( parms->server->module_config,
                                                 &jerk_module );
         
-        cfg->default_handler_module = (char*)arg;
+        cfg->default_database = (char*)arg;
         
         return NULL;
     }
 
     jerk_dir_config* dir_config = (jerk_dir_config*)config;
-    apr_table_set(dir_config->options, "JerkHandlerModule", (char*)arg);
-    
-    /* Success */
-    return NULL;
-}
-
-static const char* 
-set_jerk_default_handler_class( cmd_parms *parms, 
-                                void* config, 
-                                const char* arg )
-{
-    if(arg == NULL)
-    {
-        return NULL;
-    }
-    
-    // If this is in a server config (outside directory)
-    if(ap_check_cmd_context(parms, NOT_IN_DIR_LOC_FILE) == NULL)
-    {
-        jerk_config* cfg = ap_get_module_config( parms->server->module_config,
-                                                &jerk_module );
-        
-        cfg->default_handler_class = (char*)arg;
-        
-        return NULL;
-    }
-
-    jerk_dir_config* dir_config = (jerk_dir_config*)config;
-    apr_table_set(dir_config->options, "JerkHandlerClass", (char*)arg);
-    
-    /* Success */
-    return NULL;
-}
-
-static const char* 
-set_jerk_default_handler_method( cmd_parms *parms, 
-                                void* config, 
-                                const char* arg )
-{
-    if(arg == NULL)
-    {
-        return NULL;
-    }
-    
-    // If this is in a server config (outside directory)
-    if(ap_check_cmd_context(parms, NOT_IN_DIR_LOC_FILE) == NULL)
-    {
-        jerk_config* cfg = ap_get_module_config( parms->server->module_config,
-                                                &jerk_module );
-        
-        cfg->default_handler_method = (char*)arg;
-        
-        return NULL;
-    }
-    
-    jerk_dir_config* dir_config = (jerk_dir_config*)config;
-    apr_table_set(dir_config->options, "JerkHandlerMethod", (char*)arg);
+    apr_table_set(dir_config->options, "JerkFilterDatabase", (char*)arg);
     
     /* Success */
     return NULL;
@@ -196,7 +138,7 @@ set_jerk_env_var( cmd_parms* parms,
 */
 
 static const char* 
-set_jerk_handler(cmd_parms *parms, void* config, const char* arg)
+set_jerk_filter(cmd_parms *parms, void* config, const char* arg)
 {
     if(arg == NULL)
     {
@@ -208,7 +150,7 @@ set_jerk_handler(cmd_parms *parms, void* config, const char* arg)
     if(ap_check_cmd_context(parms, NOT_IN_DIR_LOC_FILE) == NULL)
     {
         jerk_config* cfg = ap_get_module_config( parms->server->module_config,
-                                                &jerk_module );
+                                                 &jerk_module );
         
         /* DO NOT use apr_pstrdup(parms->pool, arg) here to make a copy of the
         ** string before assignbment. It will cause a segfault.
@@ -226,7 +168,7 @@ set_jerk_handler(cmd_parms *parms, void* config, const char* arg)
 }
 
 static const char* 
-set_jerk_handler_declare(cmd_parms *parms, void* config, const char* arg)
+set_jerk_filter_declare(cmd_parms *parms, void* config, const char* arg)
 {
     if(arg == NULL)
     {
@@ -260,7 +202,7 @@ set_jerk_handler_declare(cmd_parms *parms, void* config, const char* arg)
 
 
 static const char* 
-jerk_handler_set_params( cmd_parms *parms, const char* key,
+jerk_filter_set_params( cmd_parms *parms, const char* key,
                         const char* handler, const char* value )
 {
     if((handler == NULL) || (value == NULL)) 
@@ -300,72 +242,39 @@ jerk_handler_set_params( cmd_parms *parms, const char* key,
 }
 
 static const char* 
-set_jerk_handler_config( cmd_parms *parms, void* config, 
-                         const char* handler, 
-                         const char* key, const char* value )
+set_jerk_filter_config( cmd_parms *parms, void* config, 
+                        const char* handler, 
+                        const char* key, const char* value )
 {
-    return jerk_handler_set_params( parms, key, handler, value );
+    return jerk_filter_set_params( parms, key, handler, value );
 }
 
 static const char* 
-set_jerk_handler_module( cmd_parms *parms, void* config, 
-                        const char* arg1, const char* arg2 )
+set_jerk_filter_database( cmd_parms *parms, void* config, 
+                          const char* arg1, const char* arg2 )
 {
-    return jerk_handler_set_params( parms, "JerkHandlerModule",
+    return jerk_filter_set_params( parms, 
+                                   "JerkFilterDatabase",
                                    arg1, arg2 );
-}
-
-static const char* 
-set_jerk_handler_class( cmd_parms *parms, void* config, 
-                        const char* arg1, const char* arg2 )
-{
-    return jerk_handler_set_params( parms, "JerkHandlerClass",
-                                    arg1, arg2 );
-}
-
-static const char* 
-set_jerk_handler_method( cmd_parms *parms, void* config,
-                         const char* arg1, const char* arg2 )
-{
-    return jerk_handler_set_params( parms, "JerkHandlerMethod",
-                                    arg1, arg2 );
 }
 
 static const command_rec mod_jerk_cmds[] =
 {
     AP_INIT_TAKE1(
-        "JerkDefaultHandlerModule",
+        "JerkDefaultDatabase",
         set_jerk_default_handler_module,
         NULL,
         RSRC_CONF | OR_ALL,
-        "JerkHandlerModule <string> "
+        "JerkDatabase <string> "
         "-- set default Jerk module for Apache handler."
         ),
-    
+            
     AP_INIT_TAKE1(
-        "JerkDefaultHandlerClass",
-        set_jerk_default_handler_class,
+        "JerkFilter",
+        set_jerk_filter,
         NULL,
         RSRC_CONF | OR_ALL,
-        "JerkHandlerClass <string> "
-        "-- set default Jerk class for Apache handler."
-        ),
-    
-    AP_INIT_TAKE1(
-        "JerkDefaultHandlerMethod",
-        set_jerk_default_handler_method,
-        NULL,
-        RSRC_CONF | OR_ALL,
-        "JerkHandlerMethod <string> "
-        "-- set default Jerk method for Apache handler."
-        ),
-    
-    AP_INIT_TAKE1(
-        "JerkHandler",
-        set_jerk_handler,
-        NULL,
-        RSRC_CONF | OR_ALL,
-        "JerkHandler {name} "
+        "JerkFilter {name} "
         "-- set a Jerk handler."
         ),
 
@@ -388,8 +297,8 @@ static const command_rec mod_jerk_cmds[] =
     ),
 
     AP_INIT_TAKE1(
-        "JerkHandlerDeclare",
-        set_jerk_handler_declare,
+        "JerkFilterDeclare",
+        set_jerk_filter_declare,
         NULL,
         RSRC_CONF,
         "JerkHandlerDeclare {name} "
@@ -397,38 +306,20 @@ static const command_rec mod_jerk_cmds[] =
     ),
 
     AP_INIT_TAKE2(
-        "JerkHandlerModule",
-        set_jerk_handler_module,
+        "JerkFilterDatabase",
+        set_jerk_filter_database,
         NULL,
         RSRC_CONF,
-        "JerkHandlerModule {handler} {module} "
-        "-- set Jerk module for custom handler."
-    ),
-
-    AP_INIT_TAKE2(
-        "JerkHandlerClass",
-        set_jerk_handler_class,
-        NULL,
-        RSRC_CONF,
-        "JerkHandlerClass {handler} {class} "
-        "-- set Jerk class for custom handler."
-    ),
-
-    AP_INIT_TAKE2(
-        "JerkHandlerMethod",
-        set_jerk_handler_method,
-        NULL,
-        RSRC_CONF,
-        "JerkHandlerMethod {handler} {method} "
-        "-- set Jerk method for custom handler."
+        "JerkFilterDatabase {handler} {db_path} "
+        "-- set Jerk database for handler."
     ),
 
     AP_INIT_TAKE3(
-        "JerkHandlerConfig",
-        set_jerk_handler_config,
+        "JerkFilterConfig",
+        set_jerk_filter_config,
         NULL,
         RSRC_CONF,
-        "JerkHandlerConfig {handler} {key} {value}"
+        "JerkFilterConfig {handler} {key} {value}"
         " -- define key/value config setting for handler."
     ),
 
@@ -442,10 +333,8 @@ static void* create_config(apr_pool_t* p, server_rec *s)
     /* allocate space for the configuration structure from the provided pool p. */
     cfg = (jerk_config*)apr_pcalloc(p, sizeof(jerk_config));
 
-    cfg->handler                = NULL;
-    cfg->default_handler_module = NULL;
-    cfg->default_handler_class  = NULL; 
-    cfg->default_handler_method = NULL;
+    cfg->handler          = NULL;
+    cfg->default_database = NULL;
     
     cfg->options    = apr_table_make(p, 3);
     cfg->handlers   = apr_hash_make(p);
