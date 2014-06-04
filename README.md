@@ -50,8 +50,8 @@ defines a named filter and then uses it within a specfic directory:
 
     <IfModule jerk_module>
 
-    JerkFilterDeclare  GLOBAL
-    JerkFilterDatabase GLOBAL /etc/apache2/jerk.db
+    JerkFilterDeclare  MYFILTER
+    JerkFilterDatabase MYFILTER /etc/apache2/jerk.db
 
     <Directory /var/www/mysite/content/filter>
         Options Indexes FollowSymLinks MultiViews Includes
@@ -59,7 +59,7 @@ defines a named filter and then uses it within a specfic directory:
         Order allow,deny
         allow from all
 
-        JerkFilter GLOBAL
+        JerkFilter MYFILTER
     </Directory>
 
     </IfModule>
