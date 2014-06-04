@@ -250,8 +250,6 @@ modjerk::Handler jerk_request_get_handler(request_rec* r)
 
     apache::Request req(r);
 
-    log_error(req.pool(), "JERK: jerk_request_get_handler()");
-
     // This contains all the configuration options
     apr::table notes = req.notes();
 
@@ -310,8 +308,6 @@ int jerk_request_handler(request_rec* r)
         // Load configuration
         if(jerk_request_init_configuration(r) != 0)
         {
-            log_error(req.pool(), "JERK Handler: No configuration defined");
-
             // Configuration failed
             return DECLINED;
         }
@@ -320,8 +316,6 @@ int jerk_request_handler(request_rec* r)
 
         if(handler.databaseFile() == NULL)
         {
-            log_error(req.pool(), "JERK Handler: No database defined");
-
             return DECLINED;
         }
 
@@ -337,12 +331,14 @@ int jerk_request_handler(request_rec* r)
             
             return 1;
         }
+        /*
         else
         {
             ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
                           "mod_jerk[%i]: connected to %s", 
                           getpid(), handler.databaseFile());            
         }
+        */
         
         apache::Connection con(req.connection());
         apr::table headers = req.headers_in();
@@ -368,11 +364,13 @@ int jerk_request_handler(request_rec* r)
         
         // Convert to network byte order
         uint32_t addr = htonl(ipvalue.s_addr);
-        
+
+        /*
         // Log error (critical)
         ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
                       "mod_jerk[%i]: remote ip:=%s (%u) agent: %s", 
                       getpid(), con.remote_ip(), addr, user_agent );
+        */
         
         // Look for IP match
         
@@ -394,7 +392,7 @@ int jerk_request_handler(request_rec* r)
             req.set_status(http_code);
             
             ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
-                          "mod_jerk[%i]: remote ip:=%s Match record=%i: HTTPCODE=%i", 
+                          "mod_jerk[%i]: MATCH ip=%s record=%i http=%i", 
                           getpid(), con.remote_ip(), record_id, http_code);
             
             const unsigned char* text = sqlite3_column_text(query.stmt, 2);
