@@ -101,7 +101,7 @@ COMMIT;
 If there were in a file called <tt>/tmp/jerk.sql</tt> and you wanted to create
 the database in <tt>/etc/apache2/jerk.db</tt>, you would do the following:
 
-    root $ sqlite /etc/apache2/jerk.db < /tmp/jerk.sql
+    root $ sqlite3 /etc/apache2/jerk.db < /tmp/jerk.sql
 
 ## Additional Information
 
