@@ -44,8 +44,8 @@ install: build
 
 	cd src && $(MAKE) DESTDIR=$(CURDIR)/debian/mod-jerk install
 	mkdir -p $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available
-	cp debian/mod_jerk.conf $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available/jerk.conf
-	cp debian/mod_jerk.load $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available/jerk.load
+	cp debian/config/mod_jerk.conf $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available/jerk.conf
+	cp debian/config/mod_jerk.load $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available/jerk.load
 
 	#---------------------------------------------------------------------------
 	# mod-jerk-git
