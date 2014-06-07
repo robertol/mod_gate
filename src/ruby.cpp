@@ -6,8 +6,8 @@
 #include <string>
 #include <iostream>
 
-#include "ruby_sqlite3.h"
-#include "ruby_sqlite3_stmt.h"
+#include "ruby_sqlite.h"
+#include "ruby_sqlite_stmt.h"
 
 using std::string;
 using std::cout;

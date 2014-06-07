@@ -109,7 +109,7 @@ end
 
 end # module SQLite
 
-class X
+class Test
 
   def initialize()
     @db = SQLite::DB.new()
@@ -120,10 +120,14 @@ class X
     end   
   end
 
-  def native_run()
+  def run()
+    native_query()
+    row_query()
+  end
+
+  def native_query()
     query = @db.prepare('select * from foods')
     
-    #puts query.keys()
     while query.step() == SQLITE_ROW
       query.each do |k,v|
         puts "  #{k}: #{v}"
@@ -147,6 +151,6 @@ class X
   end
 end
 
-x = X.new()
-#x.run()
-x.row_query()
+test = Test.new()
+test.run()
+
