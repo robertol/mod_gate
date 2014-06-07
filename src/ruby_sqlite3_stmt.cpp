@@ -65,9 +65,11 @@ static statement* allocator(VALUE cls)
 
 static struct RClass* cls;
 
-void init_sqlite3_stmt(mrb_state* mrb)
+void init_sqlite3_stmt(mrb_state* mrb, RClass* module)
 {
-    cls = mrb_define_class(mrb, CLASS_NAME, mrb->object_class);
+    //cls = mrb_define_class(mrb, module, CLASS_NAME, mrb->object_class);
+    cls = mrb_define_class_under(mrb, module, CLASS_NAME, mrb->object_class);
+
     MRB_SET_INSTANCE_TT(cls, MRB_TT_DATA);
 
     mrb_define_method(mrb, cls, "initialize",   (mrb_func_t)m_init, MRB_ARGS_NONE());

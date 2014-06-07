@@ -157,9 +157,10 @@ VM::VM()
     my_backtrace()
 {
     my_vm = mrb_open();
-
-    init_sqlite3(my_vm);
-    init_sqlite3_stmt(my_vm);
+     
+    RClass* mod = mrb_define_module(my_vm, "SQLite");
+    init_sqlite3(my_vm, mod);
+    init_sqlite3_stmt(my_vm, mod);
 }
 
 VM::~VM()

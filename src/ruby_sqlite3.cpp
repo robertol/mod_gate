@@ -10,7 +10,7 @@
 
 #define VALUE mrb_value
 
-#define CLASS_NAME "SQLite3"
+#define CLASS_NAME "DB"
 
 extern "C" {
 
@@ -91,9 +91,11 @@ VALUE make_sqlite3_object(mrb_state* mrb, sqlite3* handle)
     return mrb_obj_value(Data_Wrap_Struct(mrb, cls, &ruby_sqlite_type, c));
 }
 
-void init_sqlite3(mrb_state* mrb)
+void init_sqlite3(mrb_state* mrb, RClass* module)
 {
-    cls = mrb_define_class(mrb, CLASS_NAME, mrb->object_class);
+    cls = mrb_define_class_under(mrb, module, CLASS_NAME, mrb->object_class);
+    //cls = rb_define_class_under(, CLASS_NAME, rb_cObject);
+
     MRB_SET_INSTANCE_TT(cls, MRB_TT_DATA);
 
     mrb_define_method(mrb, cls, "initialize",  (mrb_func_t)m_init, MRB_ARGS_NONE());
