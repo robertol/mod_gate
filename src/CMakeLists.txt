@@ -13,6 +13,10 @@ add_definitions( "-pedantic -Wno-long-long " ) # skip -ansi
 # Needed for APR
 add_definitions( -fPIC -W -D_GNU_SOURCE -D_LARGEFILE64_SOURCE )
 
+set(RUBY_PATH ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mruby)
+set(RUBY_INCLUDE_PATH ${RUBY_PATH}/include)
+set(RUBY_LIBRARY ${RUBY_PATH}/build/host/lib/libmruby.a)
+
 #-------------------------------------------------------------------------------
 # Compilation
 #-------------------------------------------------------------------------------
@@ -30,6 +34,7 @@ set(CMAKE_LIBRARY_PATH ${PREFIX}/lib ${ALTERNATE_PREFIX/lib})
 include_directories( -I ${CMAKE_INCLUDE_PATH} 
                      -I ${CMAKE_INCLUDE_PATH}/${APR_ROOT}                     
                      -I ${CMAKE_INCLUDE_PATH}/${APACHE_INCLUDE_ROOT}
+                     -I ${RUBY_INCLUDE_PATH}
                      -I ${JERK_INCLUDE_PATH}  
                      -I ${JERK_INCLUDE_ARCH_PATH} 
                      -I ${JERK_INCLUDE_PATH}/${JERK_SITE_ARCH}  
@@ -75,7 +80,9 @@ set_target_properties( shared_lib PROPERTIES
   OUTPUT_NAME mod_${PROJECT_NAME} )
 
 target_link_libraries( shared_lib -L${CMAKE_LIBRARY_PATH} 
-   ${SYSTEM_LINK_FLAGS} ${PREFIX}/lib/${JERK_LIBRARY} )
+  ${RUBY_LIBRARY}
+  ${SYSTEM_LINK_FLAGS}
+  ${PREFIX}/lib/${JERK_LIBRARY} )
 
 # 2. Static library for testing
 add_library( static_lib STATIC ${library_sources} )
@@ -108,7 +115,7 @@ endif()
 
 # Shared lib version
 add_executable(jerkdb jerkdb.cpp sqlite.cpp getopt_long.c sqlite3.c)
-target_link_libraries(jerkdb ${OS_LIBS} )
+target_link_libraries(jerkdb ${OS_LIBS} ${RUBY_LIBRARY})
 
 #-------------------------------------------------------------------------------
 # Installation

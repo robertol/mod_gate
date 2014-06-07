@@ -41,7 +41,7 @@ SET_TARGET_PROPERTIES(test_static_lib PROPERTIES OUTPUT_NAME "modrubytest")
 # Standard unit tests
 #-------------------------------------------------------------------------------
 
-SET( test_targets test_uri )
+SET( test_targets test_uri test_lang )
 
 FOREACH(x ${test_targets})
   LIST(APPEND test_src ${x}.cpp)
@@ -52,13 +52,12 @@ FOREACH(x ${test_targets})
   ADD_EXECUTABLE(${x} ${x}.cpp)
   add_dependencies(${x} ruby_ext)
   INCLUDE_DIRECTORIES( -I "${CMAKE_CURRENT_SOURCE_DIR}/src/cpp" 
-                       -I ${RUBY_INCLUDE_PATH}
-                       -I ${RUBY_INCLUDE_PATH}/${RUBY_SITE_ARCH} )
+                       -I ${RUBY_INCLUDE_PATH} )
 
   SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
   TARGET_LINK_LIBRARIES(${x} static_lib libgtest.a 
-    ${APR_LIBRARY} ${APRUTIL_LIBRARY} ${QT_LIBRARIES} -pthread )
+    ${APR_LIBRARY} ${APRUTIL_LIBRARY} ${RUBY_LIBRARY} -pthread )
   ADD_TEST(${x}_test ${EXECUTABLE_OUTPUT_PATH} ${x})
 ENDFOREACH(x)
 
