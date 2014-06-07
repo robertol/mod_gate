@@ -1,5 +1,5 @@
-#ifndef MODJERK_APR_POOL_DECLARE
-#define MODJERK_APR_POOL_DECLARE
+#ifndef MODJERK_RUBY_DECLARE
+#define MODJERK_RUBY_DECLARE
 
 #include <mruby.h>
 #include <mruby/compile.h>
@@ -11,6 +11,7 @@
 #include <mruby/class.h>
 #include <mruby/debug.h>
 #include <mruby/error.h>
+#include <mruby/data.h>
 
 #include <string>
 

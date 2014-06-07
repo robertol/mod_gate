@@ -6,6 +6,9 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 
+	# Build miniruby
+	cd src/thirdparty/mruby && ruby ./minirake test
+
     # Build makefiles for entire project
 	cmake .
 
@@ -38,18 +41,18 @@ install: build
 	dh_installdirs
 	dh_installchangelogs 
 
-	#---------------------------------------------------------------------------
-	# mod-jerk
-	#---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
+    # mod-jerk
+    #---------------------------------------------------------------------------
 
 	cd src && $(MAKE) DESTDIR=$(CURDIR)/debian/mod-jerk install
 	mkdir -p $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available
 	cp debian/config/mod_jerk.conf $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available/jerk.conf
 	cp debian/config/mod_jerk.load $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available/jerk.load
 
-	#---------------------------------------------------------------------------
-	# mod-jerk-git
-	#---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
+    # mod-jerk-git
+    #---------------------------------------------------------------------------
 
 	cd $(CURDIR)/debian/mod-jerk-git &&    \
        $(CURDIR)/debian/scripts/gitlink.sh \

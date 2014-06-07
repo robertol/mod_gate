@@ -6,6 +6,9 @@
 #include <string>
 #include <iostream>
 
+#include "ruby_sqlite3.h"
+#include "ruby_sqlite3_stmt.h"
+
 using std::string;
 using std::cout;
 using std::endl;
@@ -154,6 +157,9 @@ VM::VM()
     my_backtrace()
 {
     my_vm = mrb_open();
+
+    init_sqlite3(my_vm);
+    init_sqlite3_stmt(my_vm);
 }
 
 VM::~VM()

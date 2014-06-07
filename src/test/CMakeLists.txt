@@ -57,7 +57,7 @@ FOREACH(x ${test_targets})
   SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
   TARGET_LINK_LIBRARIES(${x} static_lib libgtest.a 
-    ${APR_LIBRARY} ${APRUTIL_LIBRARY} ${RUBY_LIBRARY} -pthread )
+    ${APR_LIBRARY} ${APRUTIL_LIBRARY} ${RUBY_LIBRARY} ${OS_LIBS} -pthread )
   ADD_TEST(${x}_test ${EXECUTABLE_OUTPUT_PATH} ${x})
 ENDFOREACH(x)
 
