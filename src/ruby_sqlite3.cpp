@@ -16,16 +16,16 @@ extern "C" {
 
 static VALUE m_aborted(mrb_state* mrb, VALUE self);
 static VALUE m_init(mrb_state* mrb, VALUE self);
-static VALUE m_open(mrb_state* mrb, VALUE self, VALUE db);
+static VALUE m_open(mrb_state* mrb, VALUE self);
 static VALUE m_close(mrb_state* mrb, VALUE self);
-static VALUE m_prepare(mrb_state* mrb, VALUE self, VALUE sql);
-static VALUE m_finalize(mrb_state* mrb, VALUE self, VALUE stmt);
+static VALUE m_prepare(mrb_state* mrb, VALUE self);
+static VALUE m_finalize(mrb_state* mrb, VALUE self);
 static VALUE m_errno(mrb_state* mrb, VALUE self);
 static VALUE m_error(mrb_state* mrb, VALUE self);
 static VALUE m_begin(mrb_state* mrb, VALUE self);
 static VALUE m_commit(mrb_state* mrb, VALUE self);
 static VALUE m_rollback(mrb_state* mrb, VALUE self);
-static VALUE m_exec(mrb_state* mrb, VALUE self, VALUE sql);
+static VALUE m_exec(mrb_state* mrb, VALUE self);
 static VALUE m_insert_id(mrb_state* mrb, VALUE self);
 
 }
@@ -206,8 +206,11 @@ VALUE m_error(mrb_state* mrb, VALUE self)
     return mrb_str_new_cstr(mrb, sqlite3_errmsg(c->handle));
 }
 
-VALUE m_open(mrb_state* mrb, VALUE self, VALUE db)
+VALUE m_open(mrb_state* mrb, VALUE self)
 {
+    mrb_value db;
+    mrb_get_args(mrb, "S", &db);
+
     connection* c = get_object(mrb, self);
 
     bool file_exists = (access(mrb_str_to_cstr(mrb, db), R_OK) == 0);
@@ -263,8 +266,12 @@ VALUE m_close(mrb_state* mrb, VALUE self)
     return  mrb_fixnum_value(c->rc);
 }
 
-VALUE m_prepare(mrb_state* mrb, VALUE self, VALUE sql)
+VALUE m_prepare(mrb_state* mrb, VALUE self)
 {
+    mrb_value sql;
+    mrb_get_args(mrb, "S", &sql);
+    mrb_check_type(mrb, sql, MRB_TT_STRING);
+
     connection* c = get_object(mrb, self);
 
     ENSURE_CONNECTION(c)
@@ -284,9 +291,10 @@ struct statement
     sqlite3_stmt* handle;
 };
 
-VALUE m_finalize(mrb_state* mrb, VALUE self, VALUE stmt_object)
+VALUE m_finalize(mrb_state* mrb, VALUE self)
 {
-    mrb_check_type(mrb, stmt_object, MRB_TT_DATA);
+    mrb_value stmt_object;
+    mrb_get_args(mrb, "S", &stmt_object);
 
     // Require that db be a C ext type
     mrb_check_type(mrb, stmt_object, MRB_TT_DATA);
@@ -369,8 +377,12 @@ VALUE m_rollback(mrb_state* mrb, VALUE self)
     return  mrb_fixnum_value(c->rc);
 }
 
-VALUE m_exec(mrb_state* mrb, VALUE self, VALUE sql)
+VALUE m_exec(mrb_state* mrb, VALUE self)
 {
+    mrb_value sql;
+    mrb_get_args(mrb, "S", &sql);
+    mrb_check_type(mrb, sql, MRB_TT_STRING);
+
     connection* c = get_object(mrb, self);
 
     ENSURE_CONNECTION(c)

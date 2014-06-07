@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include "config.h"
+
 #include "../ruby.hpp"
 #include "../util.hpp"
 
@@ -37,6 +39,13 @@ class UnitTest : public testing::Test
 TEST_F(UnitTest, LowLevelCompile)
 {
     ruby::VM vm;
+
+    // Global Ruby variables to pass in test dir paths
+    mrb_value gintana_test_dir = mrb_str_new_cstr(vm.handle(), MODJERK_TEST_DIR);
+
+    mrb_gv_set( vm.handle(), 
+                mrb_intern_cstr(vm.handle(), "$modjerk_test_dir"), 
+                gintana_test_dir);
 
     if(vm.executeFile("scripts/test_lang/io/1.rb") == false)
     {

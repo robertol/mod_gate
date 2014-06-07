@@ -36,6 +36,7 @@ public:
     bool executeCode(const char* code);
     bool executeFile(const char* code);
 
+    inline mrb_state* handle() { return my_vm; }
     inline const std::string& error() const { return my_error; }
     inline const std::string& backtrace() const { return my_backtrace; }
 

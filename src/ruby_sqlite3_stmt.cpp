@@ -22,11 +22,11 @@ static VALUE m_step(mrb_state* mrb, VALUE self);
 static VALUE m_keys(mrb_state* mrb, VALUE self);
 static VALUE m_each(mrb_state* mrb, VALUE self);
 static VALUE m_columns(mrb_state* mrb, VALUE self);
-static VALUE m_column_type(mrb_state* mrb, VALUE self, VALUE ordinal);
-static VALUE m_column(mrb_state* mrb, VALUE self, VALUE ordinal);
-static VALUE m_column_text(mrb_state* mrb, VALUE self, VALUE ordinal);
-static VALUE m_column_int(mrb_state* mrb, VALUE self, VALUE ordinal);
-static VALUE m_column_double(mrb_state* mrb, VALUE self, VALUE ordinal);
+static VALUE m_column_type(mrb_state* mrb, VALUE self);
+static VALUE m_column(mrb_state* mrb, VALUE self);
+static VALUE m_column_text(mrb_state* mrb, VALUE self);
+static VALUE m_column_int(mrb_state* mrb, VALUE self);
+static VALUE m_column_double(mrb_state* mrb, VALUE self);
 
 }
 
@@ -91,11 +91,7 @@ VALUE m_init(mrb_state* mrb, VALUE self)
 
 VALUE make_sqlite3_stmt(mrb_state* mrb, VALUE connection, sqlite3* db, VALUE sql)
 {
-    mrb_check_type(mrb, connection, MRB_TT_DATA);
     mrb_check_type(mrb, sql, MRB_TT_STRING);
-
-    // Require that db be a C ext type
-    mrb_check_type(mrb, connection, MRB_TT_DATA);
 
     // Require that db be of Gintana::SQLite class
     if(mrb_obj_is_instance_of(mrb, connection, sqlite3_class()) == MRB_TT_FALSE)
@@ -169,8 +165,10 @@ VALUE m_columns(mrb_state* mrb, VALUE self)
     return mrb_fixnum_value(sqlite3_column_count(stmt->handle));
 }
 
-VALUE m_column_type(mrb_state* mrb, VALUE self, VALUE ordinal)
+VALUE m_column_type(mrb_state* mrb, VALUE self)
 {
+    mrb_value ordinal;
+    mrb_get_args(mrb, "i", &ordinal);
     mrb_check_type(mrb, ordinal, MRB_TT_FIXNUM);
 
     statement* stmt = get_object(mrb, self);
@@ -219,9 +217,10 @@ VALUE column_value(mrb_state* mrb, statement* stmt, int i)
     return mrb_nil_value();
 }
 
-VALUE m_column(mrb_state* mrb, VALUE self, VALUE ordinal)
+VALUE m_column(mrb_state* mrb, VALUE self)
 {
-    mrb_check_type(mrb, ordinal, MRB_TT_FIXNUM);
+    mrb_value ordinal;
+    mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
     
@@ -234,6 +233,9 @@ VALUE m_column(mrb_state* mrb, VALUE self, VALUE ordinal)
 
 VALUE m_each(mrb_state* mrb, VALUE self)
 {
+    mrb_value blk;
+    mrb_get_args(mrb, "&", &blk);
+
     statement* stmt = get_object(mrb, self);
 
     ENSURE_STATEMENT_HANDLE(stmt->handle)
@@ -247,7 +249,7 @@ VALUE m_each(mrb_state* mrb, VALUE self)
         mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, sqlite3_column_name(stmt->handle, i)));
         mrb_ary_push(mrb, array, column_value(mrb, stmt, i));
 
-        mrb_yield(mrb, mrb_fixnum_value(1), array);
+        mrb_yield(mrb, blk, array);
     }
 
     return mrb_nil_value();
@@ -272,9 +274,10 @@ VALUE m_keys(mrb_state* mrb, VALUE self)
     return a;
 }
 
-VALUE m_column_text(mrb_state* mrb, VALUE self, VALUE ordinal)
+VALUE m_column_text(mrb_state* mrb, VALUE self)
 {
-    mrb_check_type(mrb, ordinal, MRB_TT_FIXNUM);
+    mrb_value ordinal;
+    mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
     
@@ -297,9 +300,10 @@ VALUE m_column_text(mrb_state* mrb, VALUE self, VALUE ordinal)
                         sqlite3_column_bytes(stmt->handle, i) );
 }
 
-VALUE m_column_blob(mrb_state* mrb, VALUE self, VALUE ordinal)
+VALUE m_column_blob(mrb_state* mrb, VALUE self)
 {
-    mrb_check_type(mrb, ordinal, MRB_TT_FIXNUM);
+    mrb_value ordinal;
+    mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
     
@@ -322,9 +326,10 @@ VALUE m_column_blob(mrb_state* mrb, VALUE self, VALUE ordinal)
                         sqlite3_column_bytes(stmt->handle, i) );
 }
 
-VALUE m_column_int(mrb_state* mrb, VALUE self, VALUE ordinal)
+VALUE m_column_int(mrb_state* mrb, VALUE self)
 {
-    mrb_check_type(mrb, ordinal, MRB_TT_FIXNUM);
+    mrb_value ordinal;
+    mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
    
@@ -345,9 +350,10 @@ VALUE m_column_int(mrb_state* mrb, VALUE self, VALUE ordinal)
     return mrb_fixnum_value(sqlite3_column_int(stmt->handle, i));
 }
 
-VALUE m_column_double(mrb_state* mrb, VALUE self, VALUE ordinal)
+VALUE m_column_double(mrb_state* mrb, VALUE self)
 {
-    mrb_check_type(mrb, ordinal, MRB_TT_FIXNUM);
+    mrb_value ordinal;
+    mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
     

@@ -29,6 +29,14 @@ SET( CMAKE_BUILD_TYPE "Debug" )
 set(CMAKE_CXX_FLAGS  ${CMAKE_ORIGCXX_FLAGS} -std=c++0x  )
 
 #-------------------------------------------------------------------------------
+# Preprocessed files
+#-------------------------------------------------------------------------------
+
+# Create project C/C++ configuration file
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in 
+                ${CMAKE_CURRENT_BINARY_DIR}/config.h )
+
+#-------------------------------------------------------------------------------
 # Custom test programs
 #-------------------------------------------------------------------------------
 
