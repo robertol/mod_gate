@@ -11,6 +11,6 @@ RClass* sqlite3_class();
 sqlite3* get_sqlite3_handle(mrb_value self);
 mrb_value make_sqlite3_object(sqlite3* handle);
 
-};
+}
 
 #endif

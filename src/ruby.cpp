@@ -4,12 +4,15 @@
 #include <stdarg.h>
 
 #include <string>
+#include <sstream>
 #include <iostream>
+#include <stdexcept>
 
 #include "ruby_sqlite.h"
 #include "ruby_sqlite_stmt.h"
 
 using std::string;
+using std::stringstream;
 using std::cout;
 using std::endl;
 
@@ -116,7 +119,7 @@ static void output_backtrace(mrb_state *mrb, mrb_int ciidx, mrb_code *pc0, strin
         
         if (tracehead)
         {
-            //func(mrb, stream, 1, "trace:\n");
+            format(mrb, backtrace, 1, "trace:\n");
             tracehead = 0;
         }
 
@@ -151,6 +154,8 @@ static void output_backtrace(mrb_state *mrb, mrb_int ciidx, mrb_code *pc0, strin
 namespace ruby
 {
 
+#include "ruby_lib_bytecode.c"
+
 VM::VM() 
   : my_vm(NULL), 
     my_error(), 
@@ -170,6 +175,49 @@ VM::~VM()
         mrb_close(my_vm);
         my_vm = NULL;
     }
+}
+
+bool VM::loadExtensions()
+{
+    // Load bytes-compiled SQLite Ruby module
+    if(executeByteCode(ruby_lib_bytecode) == false)
+    {
+        return false;
+
+        /*
+        stringstream msg;
+        msg << "Failed to load bytecode: " 
+            << this->error() << ": "
+            << this->backtrace();
+ 
+        std::logic_error e(msg.str());
+        throw e;
+        */
+    }
+}
+
+void VM::setGlobalVariable(const char* name, const char* value)
+{
+    mrb_gv_set( my_vm, 
+                mrb_intern_cstr(my_vm, name), 
+                mrb_str_new_cstr(my_vm, value) );
+}
+
+bool VM::executeByteCode(const uint8_t* code)
+{
+    mrbc_context* c = mrbc_context_new(my_vm);
+    mrb_value v = mrb_load_irep_cxt(my_vm, code, c);
+    mrbc_context_free(my_vm, c);
+    
+    if (my_vm->exc)
+    {
+        if (!mrb_undef_p(v))
+        {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 bool VM::executeCode(const char* code)

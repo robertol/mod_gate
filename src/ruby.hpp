@@ -33,12 +33,18 @@ public:
     VM();
     virtual ~VM();
 
+    // Loads optional compiled-in libraries (SQLite, etc.).
+    bool loadExtensions();
+
+    bool executeByteCode(const uint8_t* code);
     bool executeCode(const char* code);
     bool executeFile(const char* code);
 
     inline mrb_state* handle() { return my_vm; }
     inline const std::string& error() const { return my_error; }
     inline const std::string& backtrace() const { return my_backtrace; }
+
+    void setGlobalVariable(const char* name, const char* value);
 
   private:
 

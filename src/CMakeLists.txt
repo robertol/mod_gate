@@ -118,6 +118,16 @@ add_executable(jerkdb jerkdb.cpp sqlite.cpp getopt_long.c sqlite3.c)
 target_link_libraries(jerkdb ${OS_LIBS} ${RUBY_LIBRARY})
 
 #-------------------------------------------------------------------------------
+# Code Generation
+#-------------------------------------------------------------------------------
+
+ADD_CUSTOM_TARGET(bytecode 
+  ./thirdparty/mruby/bin/mrbc -B ruby_lib_bytecode -o ruby_lib_bytecode.c ruby/sqlite.rb )
+
+#ADD_DEPENDENCIES(rsp code content css docs)
+
+
+#-------------------------------------------------------------------------------
 # Installation
 #-------------------------------------------------------------------------------
 

@@ -4,6 +4,9 @@
 
 #include "config.h"
 
+#include <mruby/dump.h>
+#include <mruby/irep.h>
+
 #include "../ruby.hpp"
 #include "../util.hpp"
 
@@ -11,6 +14,8 @@ using std::string;
 using std::cout;
 using std::cerr;
 using std::endl;
+
+#include "sqlite_lib.c"
 
 class UnitTest : public testing::Test
 {
@@ -41,11 +46,24 @@ TEST_F(UnitTest, LowLevelCompile)
     ruby::VM vm;
 
     // Global Ruby variables to pass in test dir paths
-    mrb_value gintana_test_dir = mrb_str_new_cstr(vm.handle(), MODJERK_TEST_DIR);
+    vm.setGlobalVariable("$modjerk_test_dir", MODJERK_TEST_DIR);
 
-    mrb_gv_set( vm.handle(), 
-                mrb_intern_cstr(vm.handle(), "$modjerk_test_dir"), 
-                gintana_test_dir);
+    /*
+    // Load bytes-compiled SQLite Ruby module
+    if(vm.loadExtensions() == false)
+    {
+        cerr << vm.error();
+        cerr << vm.backtrace();
+    }
+    */
+
+    // Load source SQLite Ruby module
+    const char* sqlite_module = MODJERK_RUBY_LIB_DIR"/sqlite.rb";
+    if(vm.executeFile(sqlite_module) == false)
+    {
+        cerr << vm.error();
+        cerr << vm.backtrace();
+    }
 
     if(vm.executeFile("scripts/test_lang/io/1.rb") == false)
     {
