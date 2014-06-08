@@ -213,6 +213,8 @@ bool VM::executeByteCode(const uint8_t* code)
     {
         if (!mrb_undef_p(v))
         {
+            getBacktrace();
+
             return false;
         }
     }
@@ -222,7 +224,6 @@ bool VM::executeByteCode(const uint8_t* code)
 
 bool VM::executeCode(const char* code)
 {
-    mrb_sym zero_sym = mrb_intern_lit(my_vm, "$0");
     mrbc_context *c = mrbc_context_new(my_vm);
     mrbc_filename(my_vm, c, "inproc-code");
 
@@ -231,9 +232,12 @@ bool VM::executeCode(const char* code)
 
     if(my_vm->exc)
     {
-        getBacktrace();
+        if (!mrb_undef_p(v))
+        {
+            getBacktrace();
 
-        return false;
+            return false;
+        }
     }
 
     return true;
@@ -241,8 +245,7 @@ bool VM::executeCode(const char* code)
 
 bool VM::executeFile(const char* filename)
 {
-    mrbc_context *c = mrbc_context_new(my_vm);
-    mrb_sym zero_sym = mrb_intern_lit(my_vm, "$0");
+    mrbc_context* c = mrbc_context_new(my_vm);
     mrbc_filename(my_vm, c, filename);
 
     FILE* file = fopen(filename, "r");
@@ -252,9 +255,12 @@ bool VM::executeFile(const char* filename)
     mrbc_context_free(my_vm, c);
     if(my_vm->exc)
     {
-        getBacktrace();
+        if (!mrb_undef_p(v))
+        {
+            getBacktrace();
 
-        return false;
+            return false;
+        }
     }
 
     return true;

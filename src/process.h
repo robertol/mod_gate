@@ -1,5 +1,5 @@
-#ifndef MODJERK_APACHE_PROCESS_DECL
-#define MODJERK_APACHE_PROCESS_DECL
+#ifndef MODGATE_APACHE_PROCESS_DECL
+#define MODGATE_APACHE_PROCESS_DECL
 
 #include <httpd.h>
 #include <http_request.h>

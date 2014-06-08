@@ -1,4 +1,0 @@
-src/jerk/modjerk .${JERK_JERK_LIB_DIR}/
-debian/config/mod_jerk.conf etc/apache2/mods-available/jerk.conf
-debian/config/mod_jerk.load etc/apache2/mods-available/jerk.load
-src/mod_jerk.so usr/lib/apache2/modules/

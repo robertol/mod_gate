@@ -2,7 +2,7 @@ class Test
 
   def initialize()
     @db = SQLite::DB.new()
-    rc = @db.open("#{$modjerk_test_dir}/files/foods.db")
+    rc = @db.open("#{$modgate_test_dir}/files/foods.db")
     
     if rc != SQLITE_OK
       puts @db.error()
@@ -42,4 +42,3 @@ end
 
 test = Test.new()
 test.run()
-

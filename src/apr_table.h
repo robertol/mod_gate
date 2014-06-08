@@ -1,10 +1,10 @@
-#ifndef MODJERK_APR_TABLE_DECLARE
-#define MODJERK_APR_TABLE_DECLARE
+#ifndef MODGATE_APR_TABLE_DECLARE
+#define MODGATE_APR_TABLE_DECLARE
 
 #include "apr.h"
 #include "common.h"
 
-namespace modjerk
+namespace modgate
 {
 
 namespace apr
@@ -57,7 +57,7 @@ class table
         const char* key() const;
         const char* data() const;
         
-        int remove(modjerk::i32 del);
+        int remove(modgate::i32 del);
 
         void rebind(const table& t);
     };
@@ -90,6 +90,6 @@ class table
 };
 
 } // end namespace apr
-} // end namespace modjerk
+} // end namespace modgate
 
 #endif

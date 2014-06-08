@@ -1,12 +1,12 @@
-#ifndef MODJERK_UTIL_DECL
-#define MODJERK_UTIL_DECL
+#ifndef MODGATE_UTIL_DECL
+#define MODGATE_UTIL_DECL
 
 #include <cstring>
 #include <string>
 #include <sstream>
 #include <vector>
 
-namespace modjerk
+namespace modgate
 {
 
 /// Converts a string to lowercase
@@ -41,6 +41,6 @@ int inline replace(T& source, const char* find, const char* replace)
 std::vector<std::string>& 
 split(const std::string &s, char delim, std::vector<std::string> &elems);
 
-} // ! namespace modjerk
+} // ! namespace modgate
  
 #endif

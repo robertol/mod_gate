@@ -1,5 +1,5 @@
-#ifndef MODJERK_SQLITE_DECL
-#define MODJERK_SQLITE_DECL
+#ifndef MODGATE_SQLITE_DECL
+#define MODGATE_SQLITE_DECL
 
 #include <stdint.h>
 #include "sqlite3.h"

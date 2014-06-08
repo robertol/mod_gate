@@ -8,7 +8,7 @@
 using std::string;
 using std::stringstream;
 
-namespace modjerk
+namespace modgate
 {
 namespace apr
 {
@@ -298,4 +298,4 @@ bool table::iterator::prev() const
 }
 
 } // end namespace apr
-} // end namespace modjerk
+} // end namespace modgate

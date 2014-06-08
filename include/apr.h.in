@@ -1,5 +1,5 @@
-#ifndef MODJERK_APR_INCLUDES
-#define MODJERK_APR_INCLUDES
+#ifndef MODGATE_APR_INCLUDES
+#define MODGATE_APR_INCLUDES
 
 #include <${APR_ROOT}/apr.h>
 #include <${APR_ROOT}/apr_env.h>

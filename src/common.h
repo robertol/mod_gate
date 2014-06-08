@@ -1,5 +1,5 @@
-#ifndef MODJERK_MODULE_COMMON_DECL
-#define MODJERK_MODULE_COMMON_DECL
+#ifndef MODGATE_MODULE_COMMON_DECL
+#define MODGATE_MODULE_COMMON_DECL
 
 #include "../include/common.h"
 
@@ -11,7 +11,7 @@ Michael Owens <br>
 
 \section intro Introduction
  
-The mod_jerk C/C++ source code documentation. From a doxygen perspective. The
+The mod_gate C/C++ source code documentation. From a doxygen perspective. The
 code is not commented well. Really, you should just read the source code
 directly. Nevertheless, Doxygen can still be helpful. The major Apache classes
 are well commented -- apache::Request, apache::Server, etc. But the rest is hit

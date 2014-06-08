@@ -15,8 +15,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-#include "sqlite_lib.c"
-
 class UnitTest : public testing::Test
 {
   public:
@@ -41,24 +39,28 @@ class UnitTest : public testing::Test
     }
 };
 
-TEST_F(UnitTest, LowLevelCompile)
+/*
+TEST_F(UnitTest, CompileText)
 {
     ruby::VM vm;
 
-    // Global Ruby variables to pass in test dir paths
-    vm.setGlobalVariable("$modjerk_test_dir", MODJERK_TEST_DIR);
-
-    /*
-    // Load bytes-compiled SQLite Ruby module
-    if(vm.loadExtensions() == false)
+    if(vm.executeCode("puts 'executeCode()'") == false)
     {
         cerr << vm.error();
         cerr << vm.backtrace();
     }
-    */
+}
+*/
+
+TEST_F(UnitTest, SQLiteApi)
+{
+    ruby::VM vm;
+
+    // Global Ruby variables to pass in test dir paths
+    vm.setGlobalVariable("$modgate_test_dir", MODGATE_TEST_DIR);
 
     // Load source SQLite Ruby module
-    const char* sqlite_module = MODJERK_RUBY_LIB_DIR"/sqlite.rb";
+    const char* sqlite_module = MODGATE_RUBY_LIB_DIR"/sqlite.rb";
     if(vm.executeFile(sqlite_module) == false)
     {
         cerr << vm.error();
@@ -66,12 +68,6 @@ TEST_F(UnitTest, LowLevelCompile)
     }
 
     if(vm.executeFile("scripts/test_lang/io/1.rb") == false)
-    {
-        cerr << vm.error();
-        cerr << vm.backtrace();
-    }
-
-    if(vm.executeCode("puts 'executeCode()'") == false)
     {
         cerr << vm.error();
         cerr << vm.backtrace();

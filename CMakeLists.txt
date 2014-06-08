@@ -10,16 +10,16 @@ set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
 include(CheckIncludeFiles)
 
-# MODJERK
-set( MODJERK_MAJ_V 0 )
-set( MODJERK_MIN_V 0 )
-set( MODJERK_PL    0 )
-set( MODJERK_CL      )
-set( MODJERK_BN    2 )
-set(VERSION ${MODJERK_MAJ_V}.${MODJERK_MIN_V}.${MODJERK_PL}${MODJERK_CL})
-set(SOVERSION ${MODJERK_MAJ_V}.${MODJERK_MIN_V}.${MODJERK_PL})
+# MODGATE
+set( MODGATE_MAJ_V 0 )
+set( MODGATE_MIN_V 0 )
+set( MODGATE_PL    0 )
+set( MODGATE_CL      )
+set( MODGATE_BN    2 )
+set(VERSION ${MODGATE_MAJ_V}.${MODGATE_MIN_V}.${MODGATE_PL}${MODGATE_CL})
+set(SOVERSION ${MODGATE_MAJ_V}.${MODGATE_MIN_V}.${MODGATE_PL})
 
-set(MODJERK_RELEASE_VERSION ${MODJERK_MAJ_V}.${MODJERK_MIN_V}.${MODJERK_PL}${MODJERK_CL}-${MODJERK_BN})
+set(MODGATE_RELEASE_VERSION ${MODGATE_MAJ_V}.${MODGATE_MIN_V}.${MODGATE_PL}${MODGATE_CL}-${MODGATE_BN})
 
 # Add OS params
 
@@ -49,25 +49,25 @@ if( PLATFORM STREQUAL "linux" )
 endif()
 
 execute_process( COMMAND ${DATE_COMMAND}
-                 OUTPUT_VARIABLE MODJERK_RELEASE_DATE )
+                 OUTPUT_VARIABLE MODGATE_RELEASE_DATE )
 
 # Need to chomp the \n at end of output.
-string(REGEX REPLACE "[\n]+" "" MODJERK_RELEASE_DATE "${MODJERK_RELEASE_DATE}")
+string(REGEX REPLACE "[\n]+" "" MODGATE_RELEASE_DATE "${MODGATE_RELEASE_DATE}")
 
-message( STATUS "RELEASE_DATE: ${MODJERK_RELEASE_DATE}" )
+message( STATUS "RELEASE_DATE: ${MODGATE_RELEASE_DATE}" )
 message( STATUS "VERSION:      ${VERSION}" )
 message( STATUS "SOVERSION:    ${SOVERSION}" )
 
 #-------------------------------------------------------------------------------
-# Jerk
+# Gate
 #-------------------------------------------------------------------------------
 
 # Create debian/changelog file
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/debian/changelog.in 
                 ${CMAKE_CURRENT_SOURCE_DIR}/debian/changelog )
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/debian/mod_jerk-git.gitmap.in 
-                ${CMAKE_CURRENT_SOURCE_DIR}/debian/mod_jerk-git.gitmap )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/debian/mod_gate-git.gitmap.in 
+                ${CMAKE_CURRENT_SOURCE_DIR}/debian/mod_gate-git.gitmap )
 
 # Create configuration file from .in file
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in 
@@ -82,8 +82,8 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/include/apr.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/include/apr.h )
 
 # Apache config file
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/config/mod_jerk.conf.in 
-                ${CMAKE_CURRENT_SOURCE_DIR}/config/mod_jerk.conf )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/config/mod_gate.conf.in 
+                ${CMAKE_CURRENT_SOURCE_DIR}/config/mod_gate.conf )
 
 #-------------------------------------------------------------------------------
 # Project Options

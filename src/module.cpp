@@ -22,10 +22,10 @@ APLOG_USE_MODULE();
 
 using namespace std;
 
-using namespace modjerk;
+using namespace modgate;
 using namespace sqlite;
 
-modjerk::Handler::Handler(const char* database) 
+modgate::Handler::Handler(const char* database) 
     : my_database(NULL), my_error_message()
 {
     if(database != NULL)
@@ -34,7 +34,7 @@ modjerk::Handler::Handler(const char* database)
     }    
 }
 
-modjerk::Handler::~Handler()
+modgate::Handler::~Handler()
 {
     if(my_database != NULL)
     {
@@ -43,7 +43,7 @@ modjerk::Handler::~Handler()
     }   
 }
 
-bool modjerk::Handler::connect()
+bool modgate::Handler::connect()
 {    
     // Initialize the database
     sqlite3* sqlite_db_handle;
@@ -72,7 +72,7 @@ void log_message(apr_pool_t* pool, int level, const char* message)
 {
     stringstream strm;
 
-    strm << "mod_jerk[" << getpid() << "]: "
+    strm << "mod_gate[" << getpid() << "]: "
          << message ;
 
     ap_log_perror(APLOG_MARK, level, 0, pool, strm.str().c_str());
@@ -88,42 +88,42 @@ void log_warning(apr_pool_t* pool, const char* message)
     log_message(pool, APLOG_WARNING, message);
 }
 
-int jerk_init_module(apr_pool_t* p, server_rec* server)
+int gate_init_module(apr_pool_t* p, server_rec* server)
 {
     ap_log_perror( APLOG_MARK, APLOG_NOTICE, 0, p, 
-                   "mod_jerk[%i]: startup_module", getpid() );
+                   "mod_gate[%i]: startup_module", getpid() );
 
     int x = getpid();
 
     return 0;
 }
 
-int jerk_shutdown_module()
+int gate_shutdown_module()
 {
     return 0;
 }
 
-int jerk_log_error(request_rec* r, int level, const char* msg)
+int gate_log_error(request_rec* r, int level, const char* msg)
 {    
     // Create a C++ request object, for convenience
     apache::Request request(r);
     
     // Create the error message
     stringstream strm;
-    strm << "ModJerk: " << msg;
+    strm << "ModGate: " << msg;
     
     // Print error to content
     request.rputs(strm.str().c_str());
     
     // Log error 
     ap_log_error( APLOG_MARK, level, 0, r->server, 
-                  "mod_jerk[%i] : %s", 
+                  "mod_gate[%i] : %s", 
                   getpid(), strm.str().c_str() );
 
     return 0;
 }
 
-bool merge_var( request_rec* r, jerk_dir_config* dir_cfg, apr::table& t, 
+bool merge_var( request_rec* r, gate_dir_config* dir_cfg, apr::table& t, 
                 const char* var_name, const char* server_config)
 {
     // Look for existence of value in dir_config
@@ -159,14 +159,14 @@ bool merge_var( request_rec* r, jerk_dir_config* dir_cfg, apr::table& t,
 //
 // Directory config options override server config options.
 
-int jerk_request_init_configuration(request_rec* r)
+int gate_request_init_configuration(request_rec* r)
 {
     apache::Request req(r);
 
     // Pass in module config params
     apr::table notes         = req.notes();
-    jerk_config* cfg         = jerk_server_config(r->server->module_config);
-    jerk_dir_config* dir_cfg = jerk_directory_config(r);
+    gate_config* cfg         = gate_server_config(r->server->module_config);
+    gate_dir_config* dir_cfg = gate_directory_config(r);
     
     // Merge in user-defined options from server and dir configurations
     apr::table server_options(cfg->options);
@@ -195,18 +195,18 @@ int jerk_request_init_configuration(request_rec* r)
     // dir_config exists, it will overwrite the server_config.
 
     // Module
-    if(!merge_var(r, dir_cfg, notes, "JerkDefaultDatabase", cfg->default_database))
+    if(!merge_var(r, dir_cfg, notes, "GateDefaultDatabase", cfg->default_database))
     {
-        //jerk_log_error(r, APLOG_CRIT, "JerkDefaultDatabase not defined.");
+        //gate_log_error(r, APLOG_CRIT, "GateDefaultDatabase not defined.");
         //return -1;
     }
     
-    // JerkFilter is optional.
-    if(merge_var(r, dir_cfg, notes, "JerkFilter", cfg->handler))
+    // Gate is optional.
+    if(merge_var(r, dir_cfg, notes, "Gate", cfg->handler))
     {
         // It is defined. So merge all of the handler's settings into the notes
         // table.
-        apr_hash_t* h_config = jerk_handler_config(r, notes.get("JerkFilter"));
+        apr_hash_t* h_config = gate_handler_config(r, notes.get("Gate"));
 
         if(h_config != NULL)
         {
@@ -221,13 +221,13 @@ int jerk_request_init_configuration(request_rec* r)
                 notes.set(key, data);
 
                 // Check that path exists and file can be read
-                if((string)key == "JerkFilterDatabase")
+                if((string)key == "GateDatabase")
                 {
                     if(access(data, R_OK) != 0)
                     {
-                        jerk_log_error( r, 
+                        gate_log_error( r, 
                                         APLOG_CRIT, 
-                                        "JerkDefaultDatabase unreadable or does not exists." );
+                                        "GateDefaultDatabase unreadable or does not exists." );
                         return -1;                        
                     }
                 }
@@ -239,11 +239,11 @@ int jerk_request_init_configuration(request_rec* r)
 }
 
 // Gets selected handler
-modjerk::Handler jerk_request_get_handler(request_rec* r)
+modgate::Handler gate_request_get_handler(request_rec* r)
 {
-    /* Handler resolution. Look for JerkHandler directive in dir_config or
+    /* Handler resolution. Look for GateHandler directive in dir_config or
     ** server_config. Handler must be a registered CustomHandler. If not
-    ** present, use JerkDefaultHandler.
+    ** present, use GateDefaultHandler.
     **
     ** Handler can be in server or dir config. dir overrides server.
     */
@@ -253,38 +253,38 @@ modjerk::Handler jerk_request_get_handler(request_rec* r)
     // This contains all the configuration options
     apr::table notes = req.notes();
 
-    jerk_config* cfg = jerk_server_config(r->server->module_config);
+    gate_config* cfg = gate_server_config(r->server->module_config);
 
     // Use default server config
     const char* database = cfg->default_database;
 
-    // Check for JerkFilter
-    if(notes.get("JerkFilter") != NULL)
+    // Check for Gate
+    if(notes.get("Gate") != NULL)
     {
         apr_hash_t* h_config;
-        h_config = jerk_handler_config(r, notes.get("JerkFilter"));
+        h_config = gate_handler_config(r, notes.get("Gate"));
 
         // If it doesn't exist
         if(h_config != NULL)
         {
             database = (const char*)apr_hash_get( h_config, 
-                                                  "JerkFilterDatabase", 
+                                                  "GateDatabase", 
                                                   APR_HASH_KEY_STRING );
 
-            return modjerk::Handler(database);
+            return modgate::Handler(database);
         }
     }
     else
     {
-        if(notes.get("JerkFilterDatabase") != NULL)
+        if(notes.get("GateDatabase") != NULL)
         {
-            database = notes.get("JerkDefaultDatabase");
+            database = notes.get("GateDefaultDatabase");
         }
 
         if(database != NULL)
         {
             // Add this for reference -- it is associated with the request
-            notes.set("JerkFilterDatabase", database);
+            notes.set("GateDatabase", database);
         }
 
         //std::logic_error e("Default database is not defined.");
@@ -292,23 +292,23 @@ modjerk::Handler jerk_request_get_handler(request_rec* r)
     }
     
     // Empty handler -- signifies error
-    return modjerk::Handler();
+    return modgate::Handler();
 }
 
-int jerk_request_handler(request_rec* r)
+int gate_request_handler(request_rec* r)
 {
     apache::Request req(r);
     
     try
     {
         // Load configuration
-        if(jerk_request_init_configuration(r) != 0)
+        if(gate_request_init_configuration(r) != 0)
         {
             // Configuration failed
             return DECLINED;
         }
    
-        modjerk::Handler handler = jerk_request_get_handler(r);
+        modgate::Handler handler = gate_request_get_handler(r);
 
         if(handler.databaseFile() == NULL)
         {
@@ -331,7 +331,7 @@ int jerk_request_handler(request_rec* r)
         else
         {
             ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
-                          "mod_jerk[%i]: connected to %s", 
+                          "mod_gate[%i]: connected to %s", 
                           getpid(), handler.databaseFile());            
         }
         */
@@ -352,7 +352,7 @@ int jerk_request_handler(request_rec* r)
         if(inet_pton(AF_INET, con.remote_ip(), &ipvalue) != 1)
         {
             ap_log_error( APLOG_MARK, APLOG_CRIT, 0, r->server, 
-                          "mod_jerk[%i]: inet_pton failed() ip=%s", 
+                          "mod_gate[%i]: inet_pton failed() ip=%s", 
                           getpid(), con.remote_ip());
             
             return DECLINED;
@@ -364,7 +364,7 @@ int jerk_request_handler(request_rec* r)
         /*
         // Log error (critical)
         ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
-                      "mod_jerk[%i]: remote ip:=%s (%u) agent: %s", 
+                      "mod_gate[%i]: remote ip:=%s (%u) agent: %s", 
                       getpid(), con.remote_ip(), addr, user_agent );
         */
         
@@ -388,7 +388,7 @@ int jerk_request_handler(request_rec* r)
             req.set_status(http_code);
             
             ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
-                          "mod_jerk[%i]: MATCH ip=%s record=%i http=%i", 
+                          "mod_gate[%i]: MATCH ip=%s record=%i http=%i", 
                           getpid(), con.remote_ip(), record_id, http_code);
             
             const unsigned char* text = sqlite3_column_text(query.stmt, 2);
@@ -411,11 +411,11 @@ int jerk_request_handler(request_rec* r)
         apache::Request request(r);
         
         // Print error to content
-        request.rprintf("mod_jerk Error: %s", e.what());
+        request.rprintf("mod_gate Error: %s", e.what());
         
         // Log error (critical)
         ap_log_error( APLOG_MARK, APLOG_CRIT, 0, r->server, 
-                      "mod_jerk[%i] : %s", 
+                      "mod_gate[%i] : %s", 
                       getpid(), e.what() );
         
         return OK;

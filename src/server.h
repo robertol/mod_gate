@@ -1,5 +1,5 @@
-#ifndef MODJERK_APACHE_SERVER_DECL
-#define MODJERK_APACHE_SERVER_DECL
+#ifndef MODGATE_APACHE_SERVER_DECL
+#define MODGATE_APACHE_SERVER_DECL
 
 #include <httpd.h>
 #include <http_config.h>

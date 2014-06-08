@@ -5,19 +5,19 @@
 
 #include "module.h"
 
-jerk_config* jerk_server_config(ap_conf_vector_t* module_config)
+gate_config* gate_server_config(ap_conf_vector_t* module_config)
 {
-    return ap_get_module_config(module_config, &jerk_module);
+    return ap_get_module_config(module_config, &gate_module);
 }
 
-jerk_dir_config* jerk_directory_config(request_rec* r)
+gate_dir_config* gate_directory_config(request_rec* r)
 {
-    return ap_get_module_config(r->per_dir_config, &jerk_module);
+    return ap_get_module_config(r->per_dir_config, &gate_module);
 }
 
-apr_hash_t* jerk_handler_config(request_rec* r, const char* name)
+apr_hash_t* gate_handler_config(request_rec* r, const char* name)
 {
-    jerk_config* cfg = jerk_server_config(r->server->module_config);
+    gate_config* cfg = gate_server_config(r->server->module_config);
 
     apr_hash_t* h_config;
     h_config = (apr_hash_t*)apr_hash_get( cfg->handlers, 

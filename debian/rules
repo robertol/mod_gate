@@ -18,7 +18,7 @@ build: build-stamp
 build-stamp: configure-stamp 
 	dh_testdir
 
-    # mod_mod-jerk: clean build from mod-jerk-dev and make new mod_rso.so
+    # mod_mod-gate: clean build from mod-gate-dev and make new mod_rso.so
 	cd src && $(MAKE)
 
 clean:
@@ -27,8 +27,8 @@ clean:
     # Build makefiles for entire project
 	cmake .
 	rm -f build-stamp configure-stamp
-	rm -rf debian/mod-jerk
-	rm -rf debian/mod-jerk-git
+	rm -rf debian/mod-gate
+	rm -rf debian/mod-gate-git
 	rm -rf CMakeFiles
 	rm -rf CMakeCache.txt
 
@@ -42,21 +42,21 @@ install: build
 	dh_installchangelogs 
 
     #---------------------------------------------------------------------------
-    # mod-jerk
+    # mod-gate
     #---------------------------------------------------------------------------
 
-	cd src && $(MAKE) DESTDIR=$(CURDIR)/debian/mod-jerk install
-	mkdir -p $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available
-	cp debian/config/mod_jerk.conf $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available/jerk.conf
-	cp debian/config/mod_jerk.load $(CURDIR)/debian/mod-jerk/etc/apache2/mods-available/jerk.load
+	cd src && $(MAKE) DESTDIR=$(CURDIR)/debian/mod-gate install
+	mkdir -p $(CURDIR)/debian/mod-gate/etc/apache2/mods-available
+	cp debian/config/mod_gate.conf $(CURDIR)/debian/mod-gate/etc/apache2/mods-available/gate.conf
+	cp debian/config/mod_gate.load $(CURDIR)/debian/mod-gate/etc/apache2/mods-available/gate.load
 
     #---------------------------------------------------------------------------
-    # mod-jerk-git
+    # mod-gate-git
     #---------------------------------------------------------------------------
 
-	cd $(CURDIR)/debian/mod-jerk-git &&    \
+	cd $(CURDIR)/debian/mod-gate-git &&    \
        $(CURDIR)/debian/scripts/gitlink.sh \
-       $(CURDIR)/debian/mod_jerk-git.gitmap mod_jerk
+       $(CURDIR)/debian/mod_gate-git.gitmap mod_gate
 
 	dh_installdocs
 

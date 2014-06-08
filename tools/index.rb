@@ -5,7 +5,7 @@ require 'jw/dbi'
 
 db = JW::DBI::Database.new()
 
-db.open(db: '/etc/apache2/jerk.db', driver: 'QSQLITE')
+db.open(db: '/etc/apache2/gate.db', driver: 'QSQLITE')
 
 q1 = db.query()
 q2 = db.query()

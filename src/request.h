@@ -1,5 +1,5 @@
-#ifndef MODJERK_APACHE_REQUEST_DECL
-#define MODJERK_APACHE_REQUEST_DECL
+#ifndef MODGATE_APACHE_REQUEST_DECL
+#define MODGATE_APACHE_REQUEST_DECL
 
 #include <httpd.h>
 #include <http_request.h>
@@ -14,7 +14,7 @@
 #include "apr_table.h"
 #include "server.h"
 
-typedef bool (*read_content)(const void* data, modjerk::i32 len, void* ud);
+typedef bool (*read_content)(const void* data, modgate::i32 len, void* ud);
 
 namespace apache
 {
@@ -35,7 +35,7 @@ class Request
 
   public:
 
-    static modjerk::i32 max_content_length;
+    static modgate::i32 max_content_length;
 
   public:
 
@@ -89,7 +89,7 @@ class Request
     content(read_content fn = NULL, void* user_data = NULL) const;
 
     /** \return Returns raw content (in request) length **/
-    modjerk::i32 content_length() const { return _content.size(); }
+    modgate::i32 content_length() const { return _content.size(); }
 
     /** Sets things up in Apache to read content from client. Only needs to be
      * called once per request. 
@@ -101,7 +101,7 @@ class Request
 
     /** Fills buffer buff with len bytes of data. **/
     /** \return The number of bytes of data read into the buffer **/
-    modjerk::i32 read(char** buff, modjerk::i32 len) const;
+    modgate::i32 read(char** buff, modgate::i32 len) const;
 
     /** \return Whether the request has form data **/
     bool has_form_data() const;
@@ -209,19 +209,19 @@ class Request
     inline int read_chunked() const { return _req->read_chunked; }
     
     /** \return MIME headers from the request **/
-    inline modjerk::apr::table headers_in() const { return _req->headers_in; }
+    inline modgate::apr::table headers_in() const { return _req->headers_in; }
 
     /** \return MIME headers from the response **/
-    inline modjerk::apr::table headers_out() const { return _req->headers_out; }
+    inline modgate::apr::table headers_out() const { return _req->headers_out; }
 
     /** \return MIME headers from the response printed even on error **/
-    inline modjerk::apr::table err_headers_out()  const { return _req->err_headers_out; }
+    inline modgate::apr::table err_headers_out()  const { return _req->err_headers_out; }
     
     /** \return An array of environment variables passed to the subprocess **/
-    inline modjerk::apr::table subprocess_env() const { return _req->subprocess_env; }
+    inline modgate::apr::table subprocess_env() const { return _req->subprocess_env; }
     
     /** \return Notes to pass from one module to another **/
-    inline modjerk::apr::table notes() const { return _req->notes; }
+    inline modgate::apr::table notes() const { return _req->notes; }
     
     /** \return The content type of the request **/
     const char* content_type(char* type = NULL) const 
@@ -527,12 +527,12 @@ class Request
 
     /// Parses a query argument string, url-decodes key/values, and merges into table.
     /// @return Returns true on success, failure otherwise.
-    static bool parse_query_string(const char* in, modjerk::apr::table& out);
+    static bool parse_query_string(const char* in, modgate::apr::table& out);
     
     void dump() const;
     std::string repr() const;
-    std::string table_string(const modjerk::apr::table& pTable) const;
-    void dump(const modjerk::apr::table& pTable) const;
+    std::string table_string(const modgate::apr::table& pTable) const;
+    void dump(const modgate::apr::table& pTable) const;
     request_rec *get_request_rec() { return _req; }
 };
 

@@ -1,5 +1,5 @@
-mod-jerk (${MODJERK_RELEASE_VERSION}~${LINUX_DISTRO}) ${LINUX_DISTRO}; urgency=low
+mod-gate (${MODGATE_RELEASE_VERSION}~${LINUX_DISTRO}) ${LINUX_DISTRO}; urgency=low
 
-  * Release of ${MODJERK_RELEASE_VERSION}
+  * Release of ${MODGATE_RELEASE_VERSION}
 
- -- Michael Owens <mike@mikeowens.ws>  ${MODJERK_RELEASE_DATE}
+ -- Michael Owens <mike@mikeowens.ws>  ${MODGATE_RELEASE_DATE}

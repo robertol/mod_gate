@@ -1,5 +1,5 @@
-#ifndef MODJERK_APACHE_MODULE_HPP_DECL
-#define MODJERK_APACHE_MODULE_HPP_DECL
+#ifndef MODGATE_APACHE_MODULE_HPP_DECL
+#define MODGATE_APACHE_MODULE_HPP_DECL
 
 #include "request.h"
 #include "server.h"
@@ -9,7 +9,7 @@
 // This is for C++ functions that can't be included in module.h (which is
 // strictly C).
 
-namespace modjerk
+namespace modgate
 {
 
 class Handler
@@ -47,9 +47,9 @@ class Handler
     bool connect();
 };
 
-} // end namespace modjerk
+} // end namespace modgate
 
-modjerk::Handler jerk_request_get_handler(request_rec* r);
+modgate::Handler gate_request_get_handler(request_rec* r);
 
 
 #endif

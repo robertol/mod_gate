@@ -23,9 +23,9 @@ set(RUBY_LIBRARY ${RUBY_PATH}/build/host/lib/libmruby.a)
 
 # Common libraries.
 
-add_library(libjerk_ex STATIC IMPORTED)
-set_property(TARGET libjerk_ex PROPERTY
-             IMPORTED_LOCATION ${JERK_STATIC_LIBRARY})
+add_library(libgate_ex STATIC IMPORTED)
+set_property(TARGET libgate_ex PROPERTY
+             IMPORTED_LOCATION ${GATE_STATIC_LIBRARY})
 
 set(CMAKE_INSTALL_PREFIX ${PREFIX})
 set(CMAKE_INCLUDE_PATH ${PREFIX}/include ${ALTERNATE_PREFIX/include})
@@ -35,9 +35,9 @@ include_directories( -I ${CMAKE_INCLUDE_PATH}
                      -I ${CMAKE_INCLUDE_PATH}/${APR_ROOT}                     
                      -I ${CMAKE_INCLUDE_PATH}/${APACHE_INCLUDE_ROOT}
                      -I ${RUBY_INCLUDE_PATH}
-                     -I ${JERK_INCLUDE_PATH}  
-                     -I ${JERK_INCLUDE_ARCH_PATH} 
-                     -I ${JERK_INCLUDE_PATH}/${JERK_SITE_ARCH}  
+                     -I ${GATE_INCLUDE_PATH}  
+                     -I ${GATE_INCLUDE_ARCH_PATH} 
+                     -I ${GATE_INCLUDE_PATH}/${GATE_SITE_ARCH}  
                      -I "${PROJECT_SOURCE_DIR}/include" )
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -52,7 +52,7 @@ endif()
 # Project / Files
 #-------------------------------------------------------------------------------
 
-set(PROJECT_NAME jerk)
+set(PROJECT_NAME gate)
 
 # Create configuration file from .in file
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in 
@@ -82,7 +82,7 @@ set_target_properties( shared_lib PROPERTIES
 target_link_libraries( shared_lib -L${CMAKE_LIBRARY_PATH} 
   ${RUBY_LIBRARY}
   ${SYSTEM_LINK_FLAGS}
-  ${PREFIX}/lib/${JERK_LIBRARY} )
+  ${PREFIX}/lib/${GATE_LIBRARY} )
 
 # 2. Static library for testing
 add_library( static_lib STATIC ${library_sources} )
@@ -110,22 +110,24 @@ set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
 endif()
 
 #-------------------------------------------------------------------------------
-# jerkdb command line program
+# gatedb command line program
 #-------------------------------------------------------------------------------
 
 # Shared lib version
-add_executable(jerkdb jerkdb.cpp sqlite.cpp getopt_long.c sqlite3.c)
-target_link_libraries(jerkdb ${OS_LIBS} ${RUBY_LIBRARY})
+add_executable(gatedb gatedb.cpp sqlite.cpp getopt_long.c sqlite3.c)
+target_link_libraries(gatedb ${OS_LIBS} ${RUBY_LIBRARY})
 
 #-------------------------------------------------------------------------------
 # Code Generation
 #-------------------------------------------------------------------------------
 
+ADD_CUSTOM_TARGET(miniruby cd ./thirdparty/mruby && ruby ./minirake test)
+
 ADD_CUSTOM_TARGET(bytecode 
   ./thirdparty/mruby/bin/mrbc -B ruby_lib_bytecode -o ruby_lib_bytecode.c ruby/sqlite.rb )
 
-#ADD_DEPENDENCIES(rsp code content css docs)
-
+ADD_DEPENDENCIES(gatedb bytecode)
+ADD_DEPENDENCIES(bytecode miniruby)
 
 #-------------------------------------------------------------------------------
 # Installation

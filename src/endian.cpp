@@ -1,6 +1,6 @@
 #include "endian.h"
 
-namespace modjerk {
+namespace modgate {
 
 void* swap_endian(void* addr, const int size)
 {
@@ -52,4 +52,4 @@ void* swap_endian(void* addr, const int size)
 
 namespace endian { const int one = 1; }
 
-} // end namespace modjerk
+} // end namespace modgate

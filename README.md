@@ -1,8 +1,8 @@
-# mod_jerk
+# mod_gate
 
 ## About
 
-This is an Apache module designed for dealing with jerks on the Internet. Withit
+This is an Apache module designed for dealing with gates on the Internet. Withit
 you can blacklist IP ranges and User Agents, responding with whatever HTTP
 status code you like. All the lists are stored in a SQLite database.
 
@@ -11,7 +11,7 @@ It is written from scratch specifically for Apache 2.x.
 It works using an SQLite database which contains block lists. There are two
 lists so far: IP blocks and User Agents. The IP block table contains an IP range
 (address beginning to address ending inclusive) and a HTTP status code. If the
-connection's IP falls within that range, mod_jerk will return the given HTTP
+connection's IP falls within that range, mod_gate will return the given HTTP
 code, terminating the request. It will optionally log a record as well.
 
 The other table is a list of user agents to block which works the same way.
@@ -40,9 +40,9 @@ On other systems you can build generally as follows:
 
 You can define a filter to be run across the entire web server as follows:
 
-    <IfModule jerk_module>
+    <IfModule gate_module>
 
-    JerkDefaultDatabase /etc/apache2/jerk.db
+    GateDefaultDatabase /etc/apache2/gate.db
 
     </IfModule>
 
@@ -51,10 +51,10 @@ Basically, the existence of a default filter database causes the handler to use 
 However, you might want to just run it in specfic locations. The following
 defines a named filter and then uses it within a specfic directory:
 
-    <IfModule jerk_module>
+    <IfModule gate_module>
 
-    JerkFilterDeclare  MYFILTER
-    JerkFilterDatabase MYFILTER /etc/apache2/jerk.db
+    GateDeclare  MYGATE
+    GateDatabase MYGATE /etc/apache2/gate.db
 
     <Directory /var/www/mysite/content/filter>
         Options Indexes FollowSymLinks MultiViews Includes
@@ -62,7 +62,7 @@ defines a named filter and then uses it within a specfic directory:
         Order allow,deny
         allow from all
 
-        JerkFilter MYFILTER
+        Gate MYGATE
     </Directory>
 
     </IfModule>
@@ -101,10 +101,10 @@ INSERT INTO "ip" VALUES(1,'127.0.0.1','127.0.0.1', 2130706433, 2130706433, 200, 
 COMMIT;
 ```
 
-If there were in a file called <tt>/tmp/jerk.sql</tt> and you wanted to create
-the database in <tt>/etc/apache2/jerk.db</tt>, you would do the following:
+If there were in a file called <tt>/tmp/gate.sql</tt> and you wanted to create
+the database in <tt>/etc/apache2/gate.db</tt>, you would do the following:
 
-    root $ sqlite3 /etc/apache2/jerk.db < /tmp/jerk.sql
+    root $ sqlite3 /etc/apache2/gate.db < /tmp/gate.sql
 
 ## Additional Information
 

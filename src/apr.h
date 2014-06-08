@@ -1,5 +1,5 @@
-#ifndef MODJERK_APR_POOL_DECLARE
-#define MODJERK_APR_POOL_DECLARE
+#ifndef MODGATE_APR_POOL_DECLARE
+#define MODGATE_APR_POOL_DECLARE
 
 #include <string>
 
@@ -10,14 +10,14 @@
 struct apr_pool_t;
 struct apr_finfo_t;
 
-/** \namespace modjerk::apr
+/** \namespace modgate::apr
 
-The \c modjerk::apr namespace wraps the Apache Portable Runtime API. Most of
+The \c modgate::apr namespace wraps the Apache Portable Runtime API. Most of
 the functions are thin wrappers around the actual APR functions.
  
 */
 
-namespace modjerk
+namespace modgate
 {
 
 namespace apr
@@ -142,6 +142,6 @@ file_info stat( const char* fname, apr_pool_t* pool,
                 int want_flags = APR_FINFO_MIN );
 
 } // end namespace apr
-} // end namespace modjerk
+} // end namespace modgate
 
 #endif

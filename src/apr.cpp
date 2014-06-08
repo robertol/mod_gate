@@ -8,7 +8,7 @@
 using std::string;
 using std::stringstream;
 
-namespace modjerk
+namespace modgate
 {
 namespace apr
 {
@@ -322,7 +322,7 @@ string path_root(const char* path)
 
 file_info stat(apr_file_t* file, apr_pool_t* pool, int want_flags)
 {
-    return modjerk::apr::stat(file_name(file), pool, want_flags);
+    return modgate::apr::stat(file_name(file), pool, want_flags);
 }
 
 file_info stat(const char* filename, apr_pool_t* pool, int want_flags)
@@ -449,4 +449,4 @@ const char* file_info::fname() const
 }
 
 } // end namespace apr
-} // end namespace modjerk
+} // end namespace modgate

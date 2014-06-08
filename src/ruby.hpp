@@ -1,5 +1,5 @@
-#ifndef MODJERK_RUBY_DECLARE
-#define MODJERK_RUBY_DECLARE
+#ifndef MODGATE_RUBY_DECLARE
+#define MODGATE_RUBY_DECLARE
 
 #include <mruby.h>
 #include <mruby/compile.h>

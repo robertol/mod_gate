@@ -1,5 +1,5 @@
-#ifndef MODJERK_STD_TYPES_DECLARE
-#define MODJERK_STD_TYPES_DECLARE
+#ifndef MODGATE_STD_TYPES_DECLARE
+#define MODGATE_STD_TYPES_DECLARE
 
 /*
 ** Integers of known sizes.  These typedefs might change for architectures
@@ -21,7 +21,7 @@ extern void *SwapEndian(void* Addr, const int Nb);
 #define __x86_64__
 #endif
 
-namespace modjerk
+namespace modgate
 {
 
 #if defined(__i386__)
@@ -183,7 +183,7 @@ typedef ADDR_TYPE     addr; // Platform dependent address
 #define SWAP_F64(val)  val = *(f64*) swap_endian((void*)&val, sizeof(f64))
 #define SWAP_F128(val) val = *(f128*)swap_endian((void*)&val, sizeof(f128))
 
-} // end namespace modjerk;
+} // end namespace modgate;
 
 #endif
 

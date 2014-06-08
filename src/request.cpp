@@ -13,7 +13,7 @@ using std::string;
 using std::vector;
 using std::stringstream;
 using namespace apache;
-using namespace modjerk;
+using namespace modgate;
 
 i32 Request::max_content_length = 20*1024*1024;
 
@@ -121,12 +121,12 @@ void Request::dump() const
     this->rputs(repr().c_str());
 }
 
-string Request::table_string(const modjerk::apr::table& t) const
+string Request::table_string(const modgate::apr::table& t) const
 {
     stringstream out;
     char buf[256];
 
-    modjerk::apr::table::iterator i(t);
+    modgate::apr::table::iterator i(t);
 
     while(i.next())
     {
@@ -140,7 +140,7 @@ string Request::table_string(const modjerk::apr::table& t) const
     return out.str();
 }
 
-void Request::dump(const modjerk::apr::table& pTable) const
+void Request::dump(const modgate::apr::table& pTable) const
 {
     rputs(table_string(pTable).c_str());
 }
@@ -351,7 +351,7 @@ i32 Request::read(char** buff, i32 len) const
     return n;
 }
 
-bool Request::parse_query_string(const char* in, modjerk::apr::table& t)
+bool Request::parse_query_string(const char* in, modgate::apr::table& t)
 {
     vector<string> pairs;
     split(in, '&', pairs);

@@ -32,10 +32,10 @@ static struct option opt_array[] = {
 
 void print_help()
 {
-    printf( "jerkdb version %s (%s)\n\n"
-            "Usage: jerkdb [options]\n\n"
+    printf( "gatedb version %s (%s)\n\n"
+            "Usage: gatedb [options]\n\n"
             "Available options:\n\n",
-            MODJERK_RELEASE_VERSION, SYSTEM_ARCH );
+            MODGATE_RELEASE_VERSION, SYSTEM_ARCH );
 
     const option* i = opt_array;
 

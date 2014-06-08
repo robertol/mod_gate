@@ -1,0 +1,1 @@
+LoadModule gate_module ${APACHE_MODULES_DIR}/mod_gate.so

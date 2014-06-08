@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace modjerk
+namespace modgate
 {
 
 string to_lower(string x)
@@ -212,4 +212,4 @@ string url_encode(const char* url)
     return encoded;
 }
 
-} // ! namespace modjerk
+} // ! namespace modgate

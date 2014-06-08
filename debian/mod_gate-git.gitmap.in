@@ -1,0 +1,4 @@
+src/gate/modgate .${GATE_GATE_LIB_DIR}/
+debian/config/mod_gate.conf etc/apache2/mods-available/gate.conf
+debian/config/mod_gate.load etc/apache2/mods-available/gate.load
+src/mod_gate.so usr/lib/apache2/modules/
