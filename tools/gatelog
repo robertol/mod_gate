@@ -1,0 +1,221 @@
+#!/usr/bin/ruby
+
+require 'optparse'
+require 'apachelogregex'
+require 'jw/dbi'
+
+$referrers = { 
+  /semalt/         => 'Semalt',
+  /\.(?:ru|cz)$/   => 'Russia/Czech',
+  /\.(?:cn|au)$/   => 'China/Australia',
+  /baidu\.com/     => 'Baidu'
+}
+
+$user_agents = { 
+  /A6-Indexer/        => nil,
+  /ADmantX/           => nil,
+  /Aboundex/          => nil,
+  /AboutUsBot\/Harpy/ => nil,
+  /AdnormCrawler/     => nil,
+  /BacklinkCrawler/   => nil,
+  /Baiduspider/       => nil,
+  /CATExplorador/     => nil,
+  /CCBot/             => nil,
+  /Comodo-Webinspector-Crawler/ => nil,
+  /Domnutch-Bot/      => nil,
+  /Gigabot/           => nil,
+  /Gimme60/           => nil,
+  /HRCrawler/         => nil,
+  /LSSRocketCrawler/  => nil,
+  /MaxPointCrawler/   => nil,
+  /Morfeus/           => nil,
+  /NerdyBot/          => nil,
+  /NutchCVS/          => nil,
+  /OpenWebSpider/     => nil,
+  /PagesInventory/    => nil,
+  /SEO ROBOT/         => nil,
+  /ScreenerBot/       => nil,
+  /Sogou/             => nil,
+  /TurnitinBot/       => nil, 
+  /WebAlta Crawler/   => nil, 
+  /WebTarantula/      => nil,
+  /WikiDo/            => nil,
+  /Wotbox/            => nil,
+  /Xenu/              => nil,
+  /SeznamBot/         => nil,
+  /hrbot/             => nil,
+  /ia_archiver/       => nil,
+  /blog\.erratasec\.com/ => nil,
+  /netEstate/         => nil,
+  /niki-bot/          => nil,
+  /node\.io/          => nil,
+  /nutch/             => nil,
+  /panscient/         => nil,
+  /rarely used/       => nil,
+  /rogerbot/          => nil,
+  /spyder/            => nil,
+  /webcollage/        => nil,
+  /integromedb/       => nil,
+  /ZemlyaCrawl/       => nil
+}
+
+class Indexer
+
+  attr_accessor :log_format
+
+  def initialize(db_path=nil)
+
+    if db_path != nil
+      @db = JW::DBI::Database.new()
+      @db.open(db: db_path, driver: 'QSQLITE')
+    end
+
+    @log_format = '%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"'
+  end
+
+  def blockIP(ip, note)
+    q = @db.query()
+    
+    sql = %Q{ select count(*) from ip where start_text='#{ip}' }
+    q.exec sql
+    if q[0][0].to_i > 0
+      return
+    end
+    
+    sql = %Q{ INSERT INTO ip (start_text, end_text, http_code, note) 
+              VALUES ('#{ip}', '#{ip}', 404, '#{note}') }
+    
+    puts sql
+    q.exec sql
+  end
+
+  def processLog(access_log_path)
+    @db.query.exec 'BEGIN EXCLUSIVE'
+
+    parser = ApacheLogRegex.new(@log_format)
+
+    file = open(access_log_path)
+
+    file.each_line do |line|
+      fields = parser.parse(line)
+      
+      # Process referrers to block
+      $referrers.each do |regexp, note|
+        ref = fields['%{Referer}i']
+        if ref[regexp] != nil
+          ip = fields['%h'].strip
+          blockIP(ip, note)
+        end
+      end
+
+      # Process user agents to block
+      $user_agents.each do |regexp, note|
+        ref = fields['%{User-Agent}i']
+        if ref[regexp] != nil
+          if note.nil?
+            note = regexp.to_s.gsub('(?-mix:', '')[0..-2]
+          end
+
+          ip = fields['%h'].strip
+          blockIP(ip, note)
+        end
+      end
+    end
+
+    @db.query.exec 'COMMIT'
+  end
+
+  def listUserAgents(access_log_path)
+    agents = { }
+
+    parser = ApacheLogRegex.new(@log_format)
+    file   = open(access_log_path)
+
+    file.each_line do |line|
+      fields = parser.parse(line)
+      ua = fields['%{User-Agent}i']
+
+      if not agents.has_key?(ua)
+        agents[ua] = true
+      end
+    end
+
+    agents.keys.sort.each do |key|
+      puts key
+    end   
+  end
+
+  def listReferrers(access_log_path)
+    referrers = { }
+
+    parser = ApacheLogRegex.new(@log_format)
+    file   = open(access_log_path)
+
+    file.each_line do |line|
+      fields = parser.parse(line)
+      ref = fields['%{Referer}i']
+
+      if not referrers.has_key?(ref)
+        referrers[ref] = true
+      end
+    end
+
+    referrers.keys.sort.each do |key|
+      puts key
+    end   
+  end
+
+end
+
+#-------------------------------------------------------------------------------
+# Command Line Processing
+#-------------------------------------------------------------------------------
+
+options = {:option => '', :additional_arg => ''}
+
+$opts    = nil
+$verbose = false
+$diffs   = false
+
+opts = OptionParser.new do |opts|
+  $opts = opts
+  opts.separator ''
+  opts.banner = 'Usage: run [options] <project file>'
+  opts.separator 'Available options:'
+
+  opts.on('-i', '--process STRING', 'Process Log') { |logfile|
+    indexer = Indexer.new(ARGV[-1])
+    indexer.processLog(logfile)
+  }
+
+  opts.on('-r', '--referrers STRING', 'List referrers') { |logfile|
+    indexer = Indexer.new()
+    indexer.listReferrers(logfile)
+  }
+
+  opts.on('-u', '--useragents STRING', 'List user agents') { |logfile|
+    indexer = Indexer.new()
+    indexer.listUserAgents(logfile)
+  }
+
+  opts.on('-v', '--verbose', 'Verbose logging') {
+    $verbose = true
+  }  
+
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+
+end  
+
+opts.parse!(ARGV)
+
+
+
+
+
+
+
+
+

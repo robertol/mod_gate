@@ -121,7 +121,7 @@ target_link_libraries(gatedb ${OS_LIBS} ${RUBY_LIBRARY})
 # Code Generation
 #-------------------------------------------------------------------------------
 
-ADD_CUSTOM_TARGET(miniruby cd ./thirdparty/mruby && ruby ./minirake test)
+ADD_CUSTOM_TARGET(miniruby cd ./thirdparty/mruby && ruby ./minirake build)
 
 ADD_CUSTOM_TARGET(bytecode 
   ./thirdparty/mruby/bin/mrbc -B ruby_lib_bytecode -o ruby_lib_bytecode.c ruby/sqlite.rb )

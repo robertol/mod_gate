@@ -390,7 +390,7 @@ int gate_request_handler(request_rec* r)
             ap_log_error( APLOG_MARK, APLOG_NOTICE, 0, r->server, 
                           "mod_gate[%i]: MATCH ip=%s record=%i http=%i", 
                           getpid(), con.remote_ip(), record_id, http_code);
-            
+
             const unsigned char* text = sqlite3_column_text(query.stmt, 2);
             
             if(http_code == 200)

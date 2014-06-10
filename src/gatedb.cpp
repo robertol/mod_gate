@@ -147,10 +147,13 @@ int index_database(const char* path)
     Query query(db.handle());
     Query updater(db.handle());
 
+    db.execute("BEGIN EXCLUSIVE");
+
     // Select all queues
     std::stringstream sql;
     sql << "SELECT id, start_text, end_text FROM ip "
-        << "WHERE length(start)=0 OR length(end)=0";
+        << "WHERE length(start)=0 OR length(end)=0 " 
+        << "  OR start IS NULL OR end IS NULL ";
     
     query.prepare(sql.str().c_str());
     
@@ -207,6 +210,8 @@ int index_database(const char* path)
         }
     }
     
+    db.execute("COMMIT");
+
     return 0;
 }
 
