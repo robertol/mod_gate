@@ -2,7 +2,7 @@
 
 ## About
 
-This is an Apache module designed for dealing with gates on the Internet. Withit
+This is an Apache module designed for dealing with jerks on the Internet. Withit
 you can blacklist IP ranges and User Agents, responding with whatever HTTP
 status code you like. All the lists are stored in a SQLite database.
 
