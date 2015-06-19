@@ -11,16 +11,14 @@
 static void
 p(mrb_state *mrb, mrb_value obj)
 {
-  obj = mrb_funcall(mrb, obj, "inspect", 0);
-  fwrite(RSTRING_PTR(obj), RSTRING_LEN(obj), 1, stdout);
+  mrb_value val = mrb_inspect(mrb, obj);
+
+  fwrite(RSTRING_PTR(val), RSTRING_LEN(val), 1, stdout);
   putc('\n', stdout);
 }
 #else
 #define p(mrb,obj) mrb_p(mrb,obj)
 #endif
-
-void mrb_show_version(mrb_state *);
-void mrb_show_copyright(mrb_state *);
 
 struct _args {
   FILE *rfp;
@@ -207,7 +205,7 @@ main(int argc, char **argv)
   /* Set $0 */
   zero_sym = mrb_intern_lit(mrb, "$0");
   if (args.rfp) {
-    char *cmdline;
+    const char *cmdline;
     cmdline = args.cmdline ? args.cmdline : "-";
     mrbc_filename(mrb, c, cmdline);
     mrb_gv_set(mrb, zero_sym, mrb_str_new_cstr(mrb, cmdline));

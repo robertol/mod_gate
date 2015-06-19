@@ -938,7 +938,7 @@ n/a | src/string.c | mrb_str_bytes
 
 ISO Code | Source File | C Function
 --- | --- | ---
-n/a | src/string.c | mrb_str_bytesize
+n/a | src/string.c | mrb_str_size
 
 #### capitalize
 
@@ -1328,6 +1328,12 @@ ISO Code | Source File | C Function
 --- | --- | ---
 15.3.1.2.5 | src/kernel.c | mrb_f_block_given_p_m
 
+#### local_variables
+
+ISO Code | Source File | C Function
+--- | --- | ---
+15.3.1.2.7 | src/kernel.c | mrb_local_variables
+
 #### raise
 
 ISO Code | Source File | C Function
@@ -1497,6 +1503,12 @@ ISO Code | Source File | C Function
 ISO Code | Source File | C Function
 --- | --- | ---
 15.3.1.3.26 | src/kernel.c | mrb_obj_is_kind_of_m
+
+#### local_variables
+
+ISO Code | Source File | C Function
+--- | --- | ---
+15.3.1.3.28 | src/kernel.c | mrb_local_variables
 
 #### methods
 

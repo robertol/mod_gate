@@ -23,15 +23,16 @@ MRuby::Build.new do |conf|
   conf.gembox 'default'
 
   # C compiler settings
-  # conf.cc do |cc|
-  #   cc.command = ENV['CC'] || 'gcc'
-  #   cc.flags = [ENV['CFLAGS'] || %w()]
-  #   cc.include_paths = ["#{root}/include"]
-  #   cc.defines = %w(DISABLE_GEMS)
-  #   cc.option_include_path = '-I%s'
-  #   cc.option_define = '-D%s'
-  #   cc.compile_options = "%{flags} -MMD -o %{outfile} -c %{infile}"
-  # end
+   conf.cc do |cc|
+     cc.command = ENV['CC'] || 'gcc'
+     cc.flags = [ENV['CFLAGS'] || %w( -fPIC )]
+     cc.include_paths = ["#{root}/include"]
+     cc.defines = %w(DISABLE_GEMS)
+     #cc.option_include_path = '-I%s'
+     #cc.option_define = '-D%s'
+     #cc.compile_options = "%{flags} -MMD -o %{outfile} -c %{infile}"
+     cc.compile_options = "%{flags} -MMD -o %{outfile} -c %{infile}"
+   end
 
   # mrbc settings
   # conf.mrbc do |mrbc|
@@ -78,6 +79,31 @@ MRuby::Build.new do |conf|
 
   # file separetor
   # conf.file_separator = '/'
+
+  # bintest
+  # conf.enable_bintest
+end
+
+MRuby::Build.new('host-debug') do |conf|
+  # load specific toolchain settings
+
+  # Gets set by the VS command prompts.
+  if ENV['VisualStudioVersion'] || ENV['VSINSTALLDIR']
+    toolchain :visualcpp
+  else
+    toolchain :gcc
+  end
+
+  enable_debug
+
+  # include the default GEMs
+  conf.gembox 'default'
+
+  # C compiler settings
+  conf.cc.defines = %w(ENABLE_DEBUG)
+
+  # Generate mruby debugger command (require mruby-eval)
+  conf.gem :core => "mruby-bin-debugger"
 
   # bintest
   # conf.enable_bintest

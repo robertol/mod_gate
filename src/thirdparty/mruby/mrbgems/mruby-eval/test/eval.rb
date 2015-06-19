@@ -32,6 +32,11 @@ assert('Kernel.eval', '15.3.1.2.3') do
     }.call
     c
   }
+  assert_equal(2) {
+    a = 10
+    Kernel.eval 'def f(a); b=a.send(:+, 1); end'
+    f(1)
+  }
 end
 
 assert('Kernel#eval', '15.3.1.3.12') do
@@ -44,3 +49,32 @@ assert('rest arguments of eval') do
     Kernel.eval('[\'test\', __FILE__, __LINE__]', nil, 'test.rb', 10)
   end
 end
+
+assert 'eval syntax error' do
+  assert_raise(SyntaxError) do
+    eval 'p "test'
+  end
+end
+
+assert('String instance_eval') do
+  obj = Object.new
+  obj.instance_variable_set :@test, 'test'
+  assert_raise(ArgumentError) { obj.instance_eval(0) { } }
+  assert_raise(ArgumentError) { obj.instance_eval('0', 'test', 0, 'test') }
+  assert_equal(['test.rb', 10]) { obj.instance_eval('[__FILE__, __LINE__]', 'test.rb', 10)}
+  assert_equal('test') { obj.instance_eval('@test') }
+  assert_equal('test') { obj.instance_eval { @test } }
+end
+
+assert('Kernel.#eval(string) context') do
+  class TestEvalConstScope
+    EVAL_CONST_CLASS = 'class'
+    def const_string
+      eval 'EVAL_CONST_CLASS'
+    end
+  end
+  obj = TestEvalConstScope.new
+  assert_raise(NameError) { eval 'EVAL_CONST_CLASS' }
+  assert_equal('class') { obj.const_string }
+end
+

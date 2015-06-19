@@ -8,6 +8,7 @@ module MRuby
     end
 
     def each_target(&block)
+      return to_enum(:each_target) if block.nil?
       @targets.each do |key, target|
         target.instance_eval(&block)
       end
@@ -44,7 +45,7 @@ module MRuby
     include Rake::DSL
     include LoadGems
     attr_accessor :name, :bins, :exts, :file_separator, :build_dir, :gem_clone_dir
-    attr_reader :libmruby, :gems
+    attr_reader :libmruby, :gems, :toolchains
     attr_writer :enable_bintest
 
     COMPILERS = %w(cc cxx objc asm)
@@ -79,21 +80,29 @@ module MRuby
         @git = Command::Git.new(self)
         @mrbc = Command::Mrbc.new(self)
 
-        @bins = %w(mrbc)
+        @bins = []
         @gems, @libmruby = MRuby::Gem::List.new, []
         @build_mrbtest_lib_only = false
         @cxx_abi_enabled = false
         @cxx_exception_disabled = false
+        @toolchains = []
 
         MRuby.targets[@name] = self
       end
 
       MRuby::Build.current = MRuby.targets[@name]
       MRuby.targets[@name].instance_eval(&block)
+
+      build_mrbc_exec if name == 'host'
     end
 
     def enable_debug
-      compilers.each { |c| c.defines += %w(MRB_DEBUG) }
+      compilers.each do |c|
+        c.defines += %w(MRB_DEBUG)
+        if toolchains.any? { |toolchain| toolchain == "gcc" }
+          c.flags += %w(-g3 -O0)
+        end
+      end
       @mrbc.compile_options += ' -g'
     end
 
@@ -108,8 +117,35 @@ module MRuby
     def enable_cxx_abi
       return if @cxx_exception_disabled or @cxx_abi_enabled
       compilers.each { |c| c.defines += %w(MRB_ENABLE_CXX_EXCEPTION) }
-      linker.command = cxx.command
+      linker.command = cxx.command if toolchains.find { |v| v == 'gcc' }
       @cxx_abi_enabled = true
+    end
+
+    def compile_as_cxx src, cxx_src, obj = nil, includes = []
+      src = File.absolute_path src
+      cxx_src = File.absolute_path cxx_src
+      obj = objfile(cxx_src) if obj.nil?
+
+      file cxx_src => [src, __FILE__] do |t|
+        File.open(t.name, 'w') do |f|
+          f.write <<EOS
+#define __STDC_CONSTANT_MACROS
+#define __STDC_LIMIT_MACROS
+
+extern "C" {
+#include "#{src}"
+}
+
+#{File.basename(src) == 'error.c'? 'mrb_int mrb_jmpbuf::jmpbuf_id = 0;' : ''}
+EOS
+        end
+      end
+
+      file obj => cxx_src do |t|
+        cxx.run t.name, t.prerequisites.first, [], ["#{MRUBY_ROOT}/src"] + includes
+      end
+
+      obj
     end
 
     def enable_bintest
@@ -124,14 +160,27 @@ module MRuby
       tc = Toolchain.toolchains[name.to_s]
       fail "Unknown #{name} toolchain" unless tc
       tc.setup(self)
+      @toolchains.unshift name.to_s
+    end
+
+    def primary_toolchain
+      @toolchains.first
     end
 
     def root
       MRUBY_ROOT
     end
 
+    def build_mrbc_exec
+      gem :core => 'mruby-bin-mrbc'
+    end
+
     def mrbcfile
-      MRuby.targets[@name].exefile("#{MRuby.targets[@name].build_dir}/bin/mrbc")
+      return @mrbcfile if @mrbcfile
+
+      mrbc_build = MRuby.targets['host']
+      gems.each { |v| mrbc_build = self if v.name == 'mruby-bin-mrbc' }
+      @mrbcfile = mrbc_build.exefile("#{mrbc_build.build_dir}/bin/mrbc")
     end
 
     def compilers

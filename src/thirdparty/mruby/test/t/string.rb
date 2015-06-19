@@ -5,10 +5,6 @@ assert('String', '15.2.10') do
   assert_equal Class, String.class
 end
 
-assert('String superclass', '15.2.10.2') do
-  assert_equal Object, String.superclass
-end
-
 assert('String#<=>', '15.2.10.5.1') do
   a = '' <=> ''
   b = '' <=> 'not empty'
@@ -48,6 +44,7 @@ assert('String#[]', '15.2.10.5.6') do
   b = 'abc'[-1]
   c = 'abc'[10]
   d = 'abc'[-10]
+  e = 'abc'[1.1]
 
   # length of args is 2
   a1 = 'abc'[0, -1]
@@ -67,6 +64,7 @@ assert('String#[]', '15.2.10.5.6') do
   assert_equal 'c', b
   assert_nil c
   assert_nil d
+  assert_equal 'b', e
   assert_nil a1
   assert_nil b1
   assert_nil c1
@@ -74,6 +72,10 @@ assert('String#[]', '15.2.10.5.6') do
   assert_equal 'bc', e1
   assert_equal 'bc', a3
   assert_nil b3
+
+  assert_raise(TypeError) do
+    a[nil]
+  end
 end
 
 assert('String#[] with Range') do
@@ -252,6 +254,15 @@ assert('String#gsub', '15.2.10.5.18') do
   assert_equal('A',      'a'.gsub('a'){|w| w.capitalize })
 end
 
+assert('String#gsub with backslash') do
+  s = 'abXcdXef'
+  assert_equal 'ab<\\>cd<\\>ef',    s.gsub('X', '<\\\\>')
+  assert_equal 'ab<X>cd<X>ef',      s.gsub('X', '<\\&>')
+  assert_equal 'ab<X>cd<X>ef',      s.gsub('X', '<\\0>')
+  assert_equal 'ab<ab>cd<abXcd>ef', s.gsub('X', '<\\`>')
+  assert_equal 'ab<cdXef>cd<ef>ef', s.gsub('X', '<\\\'>')
+end
+
 assert('String#gsub!', '15.2.10.5.19') do
   a = 'abcabc'
   a.gsub!('b', 'B')
@@ -320,6 +331,13 @@ assert('String#replace', '15.2.10.5.28') do
   b.replace(c);
   c.replace(b);
   assert_equal c, b
+
+  # shared string
+  s = "foo" * 100
+  a = s[10, 90]                # create shared string
+  assert_equal("", s.replace(""))    # clear
+  assert_equal("", s)          # s is cleared
+  assert_not_equal("", a)      # a should not be affected
 end
 
 assert('String#reverse', '15.2.10.5.29') do
@@ -405,6 +423,15 @@ assert('String#sub', '15.2.10.5.36') do
   assert_equal 'aBcabc', 'abcabc'.sub('b', 'B')
   assert_equal 'aBcabc', 'abcabc'.sub('b') { |w| w.capitalize }
   assert_equal 'aa$', 'aa#'.sub('#', '$')
+end
+
+assert('String#sub with backslash') do
+  s = 'abXcdXef'
+  assert_equal 'ab<\\>cdXef',    s.sub('X', '<\\\\>')
+  assert_equal 'ab<X>cdXef',     s.sub('X', '<\\&>')
+  assert_equal 'ab<X>cdXef',     s.sub('X', '<\\0>')
+  assert_equal 'ab<ab>cdXef',    s.sub('X', '<\\`>')
+  assert_equal 'ab<cdXef>cdXef', s.sub('X', '<\\\'>')
 end
 
 assert('String#sub!', '15.2.10.5.37') do

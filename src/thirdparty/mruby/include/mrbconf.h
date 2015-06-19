@@ -38,6 +38,13 @@
 /* initial size for IV khash; ignored when MRB_USE_IV_SEGLIST is set */
 //#define MRB_IVHASH_INIT_SIZE 8
 
+/* if _etext and _edata available, mruby can reduce memory used by symbols */
+//#define MRB_USE_ETEXT_EDATA
+
+/* do not use __init_array_start to determine readonly data section;
+   effective only when MRB_USE_ETEXT_EDATA is defined */
+//#define MRB_NO_INIT_ARRAY_START
+
 /* turn off generational GC by default */
 //#define MRB_GC_TURN_OFF_GENERATIONAL
 
@@ -58,6 +65,12 @@
 
 /* fixed size GC arena */
 //#define MRB_GC_FIXED_ARENA
+
+/* state atexit stack size */
+//#define MRB_FIXED_STATE_ATEXIT_STACK_SIZE 5
+
+/* fixed size state atexit stack */
+//#define MRB_FIXED_STATE_ATEXIT_STACK
 
 /* -DDISABLE_XXXX to drop following features */
 //#define DISABLE_STDIO		/* use of stdio */
@@ -85,6 +98,17 @@
 
 #ifndef TRUE
 # define TRUE 1
+#endif
+
+#if defined(MRB_BUILD_AS_DLL)
+
+#if defined(MRB_CORE) || defined(MRB_LIB)
+#define MRB_API __declspec(dllexport)
+#else
+#define MRB_API __declspec(dllimport)
+#endif
+#else
+#define MRB_API extern
 #endif
 
 #endif  /* MRUBYCONF_H */
