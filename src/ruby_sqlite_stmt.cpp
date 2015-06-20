@@ -17,16 +17,16 @@ using std::stringstream;
 
 extern "C" {
 
-static VALUE m_init(mrb_state* mrb, VALUE self);
-static VALUE m_step(mrb_state* mrb, VALUE self);
-static VALUE m_keys(mrb_state* mrb, VALUE self);
-static VALUE m_each(mrb_state* mrb, VALUE self);
-static VALUE m_columns(mrb_state* mrb, VALUE self);
-static VALUE m_column_type(mrb_state* mrb, VALUE self);
-static VALUE m_column(mrb_state* mrb, VALUE self);
-static VALUE m_column_text(mrb_state* mrb, VALUE self);
-static VALUE m_column_int(mrb_state* mrb, VALUE self);
-static VALUE m_column_double(mrb_state* mrb, VALUE self);
+    static VALUE m_init(mrb_state* mrb, VALUE self);
+    static VALUE m_step(mrb_state* mrb, VALUE self);
+    static VALUE m_keys(mrb_state* mrb, VALUE self);
+    static VALUE m_each(mrb_state* mrb, VALUE self);
+    static VALUE m_columns(mrb_state* mrb, VALUE self);
+    static VALUE m_column_type(mrb_state* mrb, VALUE self);
+    static VALUE m_column(mrb_state* mrb, VALUE self);
+    static VALUE m_column_text(mrb_state* mrb, VALUE self);
+    static VALUE m_column_int(mrb_state* mrb, VALUE self);
+    static VALUE m_column_double(mrb_state* mrb, VALUE self);
 
 }
 
@@ -39,12 +39,12 @@ static void deallocator(mrb_state* mrb, void* x)
 {
     statement* stmt = (statement*)x;
 
-    if(stmt != NULL)
+    if (stmt != NULL)
     {
-        if(stmt->handle != NULL)
+        if (stmt->handle != NULL)
         {
             sqlite3_finalize(stmt->handle);
-            
+
             stmt->handle = NULL;
         }
 
@@ -52,9 +52,9 @@ static void deallocator(mrb_state* mrb, void* x)
     }
 }
 
-const struct mrb_data_type ruby_sqlite_statement_type = 
+const struct mrb_data_type ruby_sqlite_statement_type =
 {
-    CLASS_NAME, 
+    CLASS_NAME,
     deallocator
 };
 
@@ -87,7 +87,7 @@ void init_sqlite3_stmt(mrb_state* mrb, RClass* module)
 
 VALUE m_init(mrb_state* mrb, VALUE self)
 {
-    mrb_raise( mrb, E_RUNTIME_ERROR, 
+    mrb_raise( mrb, E_RUNTIME_ERROR,
                "Cannot create a Apache::Server object this way" );
 }
 
@@ -96,13 +96,13 @@ VALUE make_sqlite3_stmt(mrb_state* mrb, VALUE connection, sqlite3* db, VALUE sql
     mrb_check_type(mrb, sql, MRB_TT_STRING);
 
     // Require that db be of Gintana::SQLite class
-    if(mrb_obj_is_instance_of(mrb, connection, sqlite3_class()) == MRB_TT_FALSE)
+    if (mrb_obj_is_instance_of(mrb, connection, sqlite3_class()) == MRB_TT_FALSE)
     {
-        mrb_raisef(mrb, E_RUNTIME_ERROR, 
+        mrb_raisef(mrb, E_RUNTIME_ERROR,
                    "wrong argument type %s (expected %s)",
                    mrb_obj_classname(mrb, connection),
                    mrb_class_name(mrb, cls)
-            );
+                  );
     }
 
     const char* zSQL = mrb_str_to_cstr(mrb, sql);
@@ -112,12 +112,12 @@ VALUE make_sqlite3_stmt(mrb_state* mrb, VALUE connection, sqlite3* db, VALUE sql
 
     int rc = sqlite3_prepare(db, zSQL, strlen(zSQL), &stmt->handle, NULL);
 
-    if(rc != SQLITE_OK)
+    if (rc != SQLITE_OK)
     {
         // Free allocated memory
         mrb_free(mrb, stmt);
-        
-        mrb_raisef( mrb, E_RUNTIME_ERROR, "sqlite::prepare() - %s", 
+
+        mrb_raisef( mrb, E_RUNTIME_ERROR, "sqlite::prepare() - %s",
                     sqlite3_errmsg(db) );
     }
 
@@ -147,7 +147,7 @@ statement* get_object(mrb_state* mrb, VALUE self)
         msg    << __FILE__ << ":" << __LINE__;                      \
         mrb_raisef(mrb, E_RUNTIME_ERROR, "Invalid statement handle: %s", \
                    msg.str().c_str());                                  \
-    }                                                    
+    }
 
 VALUE m_step(mrb_state* mrb, VALUE self)
 {
@@ -163,7 +163,7 @@ VALUE m_columns(mrb_state* mrb, VALUE self)
     statement* stmt = get_object(mrb, self);
 
     ENSURE_STATEMENT_HANDLE(stmt->handle)
-    
+
     return mrb_fixnum_value(sqlite3_column_count(stmt->handle));
 }
 
@@ -174,7 +174,7 @@ VALUE m_column_type(mrb_state* mrb, VALUE self)
     mrb_check_type(mrb, ordinal, MRB_TT_FIXNUM);
 
     statement* stmt = get_object(mrb, self);
-    
+
     ENSURE_STATEMENT_HANDLE(stmt->handle)
 
     return mrb_fixnum_value(sqlite3_column_type(stmt->handle, mrb_fixnum(ordinal)));
@@ -184,7 +184,7 @@ VALUE column_value(mrb_state* mrb, statement* stmt, int i)
 {
     int type = sqlite3_column_type(stmt->handle, i);
 
-    switch(type)
+    switch (type)
     {
         case SQLITE_INTEGER:
         {
@@ -198,8 +198,8 @@ VALUE column_value(mrb_state* mrb, statement* stmt, int i)
 
         case SQLITE_BLOB:
         {
-            return mrb_str_new( mrb, 
-                                (const char*)sqlite3_column_blob(stmt->handle, i), 
+            return mrb_str_new( mrb,
+                                (const char*)sqlite3_column_blob(stmt->handle, i),
                                 sqlite3_column_bytes(stmt->handle, i) );
         }
 
@@ -207,11 +207,11 @@ VALUE column_value(mrb_state* mrb, statement* stmt, int i)
         {
             return mrb_nil_value();
         }
-        
+
         case SQLITE_TEXT:
         {
-            return mrb_str_new( mrb, 
-                                (const char*)sqlite3_column_text(stmt->handle, i), 
+            return mrb_str_new( mrb,
+                                (const char*)sqlite3_column_text(stmt->handle, i),
                                 sqlite3_column_bytes(stmt->handle, i) );
         }
     }
@@ -225,7 +225,7 @@ VALUE m_column(mrb_state* mrb, VALUE self)
     mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
-    
+
     ENSURE_STATEMENT_HANDLE(stmt->handle)
 
     int i = mrb_fixnum(ordinal);
@@ -245,7 +245,7 @@ VALUE m_each(mrb_state* mrb, VALUE self)
     int cols = sqlite3_column_count(stmt->handle);
 
     int i;
-    for(i=0; i<cols; i++)
+    for (i = 0; i < cols; i++)
     {
         mrb_value array = mrb_ary_new(mrb);
         mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, sqlite3_column_name(stmt->handle, i)));
@@ -264,15 +264,15 @@ VALUE m_keys(mrb_state* mrb, VALUE self)
     ENSURE_STATEMENT_HANDLE(stmt->handle)
 
     int cols = sqlite3_column_count(stmt->handle);
-    
+
     VALUE a = mrb_ary_new(mrb);
 
     int i;
-    for(i=0; i<cols; i++)
+    for (i = 0; i < cols; i++)
     {
-        mrb_ary_push(mrb, a, mrb_str_new_cstr(mrb, sqlite3_column_name(stmt->handle,i)));
+        mrb_ary_push(mrb, a, mrb_str_new_cstr(mrb, sqlite3_column_name(stmt->handle, i)));
     }
-    
+
     return a;
 }
 
@@ -282,7 +282,7 @@ VALUE m_column_text(mrb_state* mrb, VALUE self)
     mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
-    
+
     ENSURE_STATEMENT_HANDLE(stmt->handle)
 
     int i = mrb_fixnum(ordinal);
@@ -290,15 +290,15 @@ VALUE m_column_text(mrb_state* mrb, VALUE self)
     // Check that ordinal is within bounds
     int cols = sqlite3_column_count(stmt->handle);
 
-    if(i >= cols)
+    if (i >= cols)
     {
         return mrb_nil_value();
     }
 
     int type = sqlite3_column_type(stmt->handle, i);
 
-    return mrb_str_new( mrb, 
-                        (const char*)sqlite3_column_text(stmt->handle, i), 
+    return mrb_str_new( mrb,
+                        (const char*)sqlite3_column_text(stmt->handle, i),
                         sqlite3_column_bytes(stmt->handle, i) );
 }
 
@@ -308,7 +308,7 @@ VALUE m_column_blob(mrb_state* mrb, VALUE self)
     mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
-    
+
     ENSURE_STATEMENT_HANDLE(stmt->handle)
 
     int i = mrb_fixnum(ordinal);
@@ -316,7 +316,7 @@ VALUE m_column_blob(mrb_state* mrb, VALUE self)
     // Check that ordinal is within bounds
     int cols = sqlite3_column_count(stmt->handle);
 
-    if(i >= cols)
+    if (i >= cols)
     {
         return mrb_nil_value();
     }
@@ -324,7 +324,7 @@ VALUE m_column_blob(mrb_state* mrb, VALUE self)
     int type = sqlite3_column_type(stmt->handle, i);
 
     return mrb_str_new( mrb,
-                        (const char*)sqlite3_column_blob(stmt->handle, i), 
+                        (const char*)sqlite3_column_blob(stmt->handle, i),
                         sqlite3_column_bytes(stmt->handle, i) );
 }
 
@@ -334,7 +334,7 @@ VALUE m_column_int(mrb_state* mrb, VALUE self)
     mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
-   
+
     ENSURE_STATEMENT_HANDLE(stmt->handle)
 
     int i = mrb_fixnum(ordinal);
@@ -342,7 +342,7 @@ VALUE m_column_int(mrb_state* mrb, VALUE self)
     // Check that ordinal is within bounds
     int cols = sqlite3_column_count(stmt->handle);
 
-    if(i >= cols)
+    if (i >= cols)
     {
         return mrb_nil_value();
     }
@@ -358,7 +358,7 @@ VALUE m_column_double(mrb_state* mrb, VALUE self)
     mrb_get_args(mrb, "i", &ordinal);
 
     statement* stmt = get_object(mrb, self);
-    
+
     ENSURE_STATEMENT_HANDLE(stmt->handle)
 
     int i = mrb_fixnum(ordinal);
@@ -366,7 +366,7 @@ VALUE m_column_double(mrb_state* mrb, VALUE self)
     // Check that ordinal is within bounds
     int cols = sqlite3_column_count(stmt->handle);
 
-    if(i >= cols)
+    if (i >= cols)
     {
         return mrb_nil_value();
     }

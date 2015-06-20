@@ -18,48 +18,48 @@ using std::endl;
 
 #define BUFF_LEN 1024
 
-static void format(mrb_state *mrb, string& buffer, int level, const char *fmt, ...)
+static void format(mrb_state* mrb, string& buffer, int level, const char* fmt, ...)
 {
     char buff[BUFF_LEN];
-	va_list ap;
-	ssize_t vlen;
-	ssize_t maxlen = BUFF_LEN - 1;
+    va_list ap;
+    ssize_t vlen;
+    ssize_t maxlen = BUFF_LEN - 1;
 
-	va_start(ap, fmt);
-	vlen = vsnprintf(&buff[0], maxlen, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    vlen = vsnprintf(&buff[0], maxlen, fmt, ap);
+    va_end(ap);
 
     ssize_t bytes = 0;
 
-	if(vlen >= maxlen)
+    if (vlen >= maxlen)
     {
-		buff[maxlen-1] = '\0'; /* Ensuring libc correctness */
+        buff[maxlen - 1] = '\0'; /* Ensuring libc correctness */
         bytes = maxlen;
-	}
-    else if(vlen >= 0)
+    }
+    else if (vlen >= 0)
     {
-		buff[vlen] = '\0'; /* Ensuring libc correctness */
+        buff[vlen] = '\0'; /* Ensuring libc correctness */
         bytes = vlen;
-	} 
+    }
     else
     {
         // The libc on this system is broken.
-		vlen = sizeof("<broken vsnprintf>") - 1;
-		maxlen--;
-		bytes = vlen < maxlen ? vlen : maxlen;
-		memcpy(buff, "<broken vsnprintf>", bytes);
-		buff[bytes] = 0;
-	}
+        vlen = sizeof("<broken vsnprintf>") - 1;
+        maxlen--;
+        bytes = vlen < maxlen ? vlen : maxlen;
+        memcpy(buff, "<broken vsnprintf>", bytes);
+        buff[bytes] = 0;
+    }
 
     buffer.append(&buff[0], bytes);
 }
 
-static void output_backtrace(mrb_state *mrb, mrb_int ciidx, mrb_code *pc0, string& backtrace)
+static void output_backtrace(mrb_state* mrb, mrb_int ciidx, mrb_code* pc0, string& backtrace)
 {
-    mrb_callinfo *ci;
-    const char *filename, *method, *sep;
+    mrb_callinfo* ci;
+    const char* filename, *method, *sep;
     int i, lineno, tracehead = 1;
-    
+
     if (ciidx >= mrb->c->ciend - mrb->c->cibase)
     {
         ciidx = 10; /* ciidx is broken... */
@@ -70,28 +70,28 @@ static void output_backtrace(mrb_state *mrb, mrb_int ciidx, mrb_code *pc0, strin
         ci = &mrb->c->cibase[i];
         filename = NULL;
         lineno = -1;
-        
+
         if (!ci->proc)
         {
             continue;
         }
-        
+
         if (MRB_PROC_CFUNC_P(ci->proc))
         {
             continue;
         }
         else
         {
-            mrb_irep *irep = ci->proc->body.irep;
-            mrb_code *pc;
+            mrb_irep* irep = ci->proc->body.irep;
+            mrb_code* pc;
 
             if (mrb->c->cibase[i].err)
             {
                 pc = mrb->c->cibase[i].err;
             }
-            else if (i+1 <= ciidx)
+            else if (i + 1 <= ciidx)
             {
-                pc = mrb->c->cibase[i+1].pc - 1;
+                pc = mrb->c->cibase[i + 1].pc - 1;
             }
             else
             {
@@ -101,8 +101,11 @@ static void output_backtrace(mrb_state *mrb, mrb_int ciidx, mrb_code *pc0, strin
             lineno = mrb_debug_get_line(irep, (uint32_t)(pc - irep->iseq));
         }
 
-        if (lineno == -1) continue;
-        
+        if (lineno == -1)
+        {
+            continue;
+        }
+
         if (ci->target_class == ci->proc->target_class)
         {
             sep = ".";
@@ -111,12 +114,12 @@ static void output_backtrace(mrb_state *mrb, mrb_int ciidx, mrb_code *pc0, strin
         {
             sep = "#";
         }
-        
+
         if (!filename)
         {
             filename = "(unknown)";
         }
-        
+
         if (tracehead)
         {
             format(mrb, backtrace, 1, "trace:\n");
@@ -124,12 +127,12 @@ static void output_backtrace(mrb_state *mrb, mrb_int ciidx, mrb_code *pc0, strin
         }
 
         method = mrb_sym2name(mrb, ci->mid);
- 
-       if(method)
+
+        if (method)
         {
-            const char *cn = mrb_class_name(mrb, ci->proc->target_class);
-            
-            if(cn)
+            const char* cn = mrb_class_name(mrb, ci->proc->target_class);
+
+            if (cn)
             {
                 format(mrb, backtrace, 1, "\t[%d] ", i);
                 format(mrb, backtrace, 0, "%s:%d:in %s%s%s", filename, lineno, cn, sep, method);
@@ -156,13 +159,13 @@ namespace ruby
 
 #include "ruby_lib_bytecode.c"
 
-VM::VM() 
-  : my_vm(NULL), 
-    my_error(), 
-    my_backtrace()
+VM::VM()
+    : my_vm(NULL),
+      my_error(),
+      my_backtrace()
 {
     my_vm = mrb_open();
-     
+
     RClass* mod = mrb_define_module(my_vm, "SQLite");
     init_sqlite3(my_vm, mod);
     init_sqlite3_stmt(my_vm, mod);
@@ -170,7 +173,7 @@ VM::VM()
 
 VM::~VM()
 {
-    if(my_vm != NULL)
+    if (my_vm != NULL)
     {
         mrb_close(my_vm);
         my_vm = NULL;
@@ -180,16 +183,16 @@ VM::~VM()
 bool VM::loadExtensions()
 {
     // Load bytes-compiled SQLite Ruby module
-    if(executeByteCode(ruby_lib_bytecode) == false)
+    if (executeByteCode(ruby_lib_bytecode) == false)
     {
         return false;
 
         /*
         stringstream msg;
-        msg << "Failed to load bytecode: " 
+        msg << "Failed to load bytecode: "
             << this->error() << ": "
             << this->backtrace();
- 
+
         std::logic_error e(msg.str());
         throw e;
         */
@@ -198,8 +201,8 @@ bool VM::loadExtensions()
 
 void VM::setGlobalVariable(const char* name, const char* value)
 {
-    mrb_gv_set( my_vm, 
-                mrb_intern_cstr(my_vm, name), 
+    mrb_gv_set( my_vm,
+                mrb_intern_cstr(my_vm, name),
                 mrb_str_new_cstr(my_vm, value) );
 }
 
@@ -208,7 +211,7 @@ bool VM::executeByteCode(const uint8_t* code)
     mrbc_context* c = mrbc_context_new(my_vm);
     mrb_value v = mrb_load_irep_cxt(my_vm, code, c);
     mrbc_context_free(my_vm, c);
-    
+
     if (my_vm->exc)
     {
         if (!mrb_undef_p(v))
@@ -218,19 +221,19 @@ bool VM::executeByteCode(const uint8_t* code)
             return false;
         }
     }
-    
+
     return true;
 }
 
 bool VM::executeCode(const char* code)
 {
-    mrbc_context *c = mrbc_context_new(my_vm);
+    mrbc_context* c = mrbc_context_new(my_vm);
     mrbc_filename(my_vm, c, "inproc-code");
 
     mrb_value v = mrb_load_string_cxt(my_vm, code, c);
     mrbc_context_free(my_vm, c);
 
-    if(my_vm->exc)
+    if (my_vm->exc)
     {
         if (!mrb_undef_p(v))
         {
@@ -253,7 +256,7 @@ bool VM::executeFile(const char* filename)
     fclose(file);
 
     mrbc_context_free(my_vm, c);
-    if(my_vm->exc)
+    if (my_vm->exc)
     {
         if (!mrb_undef_p(v))
         {
@@ -268,22 +271,22 @@ bool VM::executeFile(const char* filename)
 
 void VM::getBacktrace()
 {
-    if(my_vm->exc)
+    if (my_vm->exc)
     {
         mrb_int ciidx = mrb_fixnum(
-            mrb_obj_iv_get(my_vm, my_vm->exc, mrb_intern_lit(my_vm, "ciidx")));                
-        
+                            mrb_obj_iv_get(my_vm, my_vm->exc, mrb_intern_lit(my_vm, "ciidx")));
+
         mrb_code* code = (mrb_code*)mrb_cptr(
-            mrb_obj_iv_get( my_vm, 
-                            my_vm->exc, 
-                            mrb_intern_lit(my_vm, "lastpc")));
-        
+                             mrb_obj_iv_get( my_vm,
+                                             my_vm->exc,
+                                             mrb_intern_lit(my_vm, "lastpc")));
+
         my_backtrace.clear();
         my_error.clear();
-        
-        output_backtrace(my_vm, ciidx, code, my_backtrace);           
+
+        output_backtrace(my_vm, ciidx, code, my_backtrace);
         mrb_value s = mrb_funcall(my_vm, mrb_obj_value(my_vm->exc), "inspect", 0);
-        if(mrb_string_p(s))
+        if (mrb_string_p(s))
         {
             my_error.append(RSTRING_PTR(s), RSTRING_LEN(s));
         }

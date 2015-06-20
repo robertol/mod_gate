@@ -14,19 +14,19 @@
 
 extern "C" {
 
-static VALUE m_aborted(mrb_state* mrb, VALUE self);
-static VALUE m_init(mrb_state* mrb, VALUE self);
-static VALUE m_open(mrb_state* mrb, VALUE self);
-static VALUE m_close(mrb_state* mrb, VALUE self);
-static VALUE m_prepare(mrb_state* mrb, VALUE self);
-static VALUE m_finalize(mrb_state* mrb, VALUE self);
-static VALUE m_errno(mrb_state* mrb, VALUE self);
-static VALUE m_error(mrb_state* mrb, VALUE self);
-static VALUE m_begin(mrb_state* mrb, VALUE self);
-static VALUE m_commit(mrb_state* mrb, VALUE self);
-static VALUE m_rollback(mrb_state* mrb, VALUE self);
-static VALUE m_exec(mrb_state* mrb, VALUE self);
-static VALUE m_insert_id(mrb_state* mrb, VALUE self);
+    static VALUE m_aborted(mrb_state* mrb, VALUE self);
+    static VALUE m_init(mrb_state* mrb, VALUE self);
+    static VALUE m_open(mrb_state* mrb, VALUE self);
+    static VALUE m_close(mrb_state* mrb, VALUE self);
+    static VALUE m_prepare(mrb_state* mrb, VALUE self);
+    static VALUE m_finalize(mrb_state* mrb, VALUE self);
+    static VALUE m_errno(mrb_state* mrb, VALUE self);
+    static VALUE m_error(mrb_state* mrb, VALUE self);
+    static VALUE m_begin(mrb_state* mrb, VALUE self);
+    static VALUE m_commit(mrb_state* mrb, VALUE self);
+    static VALUE m_rollback(mrb_state* mrb, VALUE self);
+    static VALUE m_exec(mrb_state* mrb, VALUE self);
+    static VALUE m_insert_id(mrb_state* mrb, VALUE self);
 
 }
 
@@ -41,13 +41,13 @@ struct connection
 
 static void deallocator(mrb_state* mrb, void* x)
 {
-    if(x != NULL)
+    if (x != NULL)
     {
         connection* c = (connection*)x;
 
-        if(c->handle != NULL)
+        if (c->handle != NULL)
         {
-            if(c->dont_delete == false)
+            if (c->dont_delete == false)
             {
                 sqlite3_close(c->handle);
             }
@@ -59,9 +59,9 @@ static void deallocator(mrb_state* mrb, void* x)
     }
 }
 
-static const struct mrb_data_type ruby_sqlite_type = 
+static const struct mrb_data_type ruby_sqlite_type =
 {
-    CLASS_NAME, 
+    CLASS_NAME,
     deallocator
 };
 
@@ -70,7 +70,7 @@ static struct RClass* cls;
 connection* allocator(mrb_state* mrb)
 {
     connection* c = (connection*)mrb_malloc(mrb, sizeof(connection));
-    
+
     // Set dont_delete to false -- we have to clean this up as we allocated it.
     c->dont_delete == false;
 
@@ -87,7 +87,7 @@ VALUE make_sqlite3_object(mrb_state* mrb, sqlite3* handle)
     // Set dont_delete to true -- we don't clean it up as we did not allocate
     // it.
     c->dont_delete == true;
-    
+
     return mrb_obj_value(Data_Wrap_Struct(mrb, cls, &ruby_sqlite_type, c));
 }
 
@@ -150,19 +150,19 @@ void init_sqlite3(mrb_state* mrb, RClass* module)
 VALUE m_init(mrb_state* mrb, VALUE self)
 {
     connection* c;
-    
+
     c = (connection*)DATA_PTR(self);
-    
-    if(c) 
+
+    if (c)
     {
         deallocator(mrb, c);
     }
-    
+
     DATA_TYPE(self) = &ruby_sqlite_type;
     DATA_PTR(self)  = NULL;
-    c = allocator(mrb); 
+    c = allocator(mrb);
     DATA_PTR(self) = c;
-    
+
     return self;
 }
 
@@ -183,7 +183,7 @@ static connection* get_object(mrb_state* mrb, VALUE self)
         msg    << __FILE__ << ":" << __LINE__;               \
         mrb_raisef( mrb, E_RUNTIME_ERROR, "Invalid db handle: %s", \
                     msg.str().c_str());                            \
-    }                                                    
+    }
 
 sqlite3* get_sqlite3_handle(mrb_state* mrb, VALUE self)
 {
@@ -223,7 +223,7 @@ VALUE m_open(mrb_state* mrb, VALUE self)
     //register_sql_functions(c->handle);
 
     // If the file already exists
-    if(file_exists)
+    if (file_exists)
     {
         // sqlite3_open() will open anything and not complain. It does not check to
         // see if the file is a valid SQLite database. We need to know this now. So
@@ -231,13 +231,13 @@ VALUE m_open(mrb_state* mrb, VALUE self)
         // compiling a simple statement. The compilation alone will force SQLite to
         // go the the file for inforamtion, which will determine its validity. If
         // this statement does not compile, we don't have a valid database.
-        
+
         const char* sql = "select count(*) from sqlite_master";
         sqlite3_stmt* stmt;
         c->rc = sqlite3_prepare(c->handle, sql, strlen(sql), &stmt, NULL);
         sqlite3_finalize(stmt);
     }
-        
+
     return mrb_fixnum_value(c->rc);
 }
 
@@ -247,14 +247,14 @@ VALUE m_close(mrb_state* mrb, VALUE self)
 
     ENSURE_CONNECTION(c)
 
-    if(c->handle != NULL)
+    if (c->handle != NULL)
     {
         c->rc = sqlite3_close(c->handle);
 
         // If rc != SQLITE_OK, then there is an unfinalized statement, and the
         // connection was not closed. We return c->rc to indicate this, so
         // caller at least can check for this condition.
-        if(c->rc == SQLITE_OK)
+        if (c->rc == SQLITE_OK)
         {
             // Closed. Set handle to NULL to indiciate this
             c->handle = NULL;
@@ -278,7 +278,7 @@ VALUE m_prepare(mrb_state* mrb, VALUE self)
 
     ENSURE_CONNECTION(c)
 
-    if(c->handle == NULL)
+    if (c->handle == NULL)
     {
         c->rc = SQLITE_ERROR;
 
@@ -302,13 +302,13 @@ VALUE m_finalize(mrb_state* mrb, VALUE self)
     mrb_check_type(mrb, stmt_object, MRB_TT_DATA);
 
     // Require that db be of Gintana::SQLite class
-    if(mrb_obj_is_instance_of(mrb, stmt_object, sqlite3_stmt_class()) == MRB_TT_FALSE)
+    if (mrb_obj_is_instance_of(mrb, stmt_object, sqlite3_stmt_class()) == MRB_TT_FALSE)
     {
-        mrb_raisef( mrb, E_RUNTIME_ERROR, 
+        mrb_raisef( mrb, E_RUNTIME_ERROR,
                     "wrong argument type %s (expected %s)",
                     mrb_obj_classname(mrb, stmt_object),
                     mrb_class_name(mrb, cls)
-            );
+                  );
     }
 
     connection* c = get_object(mrb, self);
@@ -331,7 +331,7 @@ VALUE m_begin(mrb_state* mrb, VALUE self)
 
     ENSURE_CONNECTION(c)
 
-    if(c->handle == NULL)
+    if (c->handle == NULL)
     {
         c->rc = SQLITE_ERROR;
 
@@ -349,7 +349,7 @@ VALUE m_commit(mrb_state* mrb, VALUE self)
 
     ENSURE_CONNECTION(c)
 
-    if(c->handle == NULL)
+    if (c->handle == NULL)
     {
         c->rc = SQLITE_ERROR;
 
@@ -367,7 +367,7 @@ VALUE m_rollback(mrb_state* mrb, VALUE self)
 
     ENSURE_CONNECTION(c)
 
-    if(c->handle == NULL)
+    if (c->handle == NULL)
     {
         c->rc = SQLITE_ERROR;
 
@@ -389,7 +389,7 @@ VALUE m_exec(mrb_state* mrb, VALUE self)
 
     ENSURE_CONNECTION(c)
 
-    if(c->handle == NULL)
+    if (c->handle == NULL)
     {
         c->rc = SQLITE_ERROR;
 

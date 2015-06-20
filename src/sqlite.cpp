@@ -17,22 +17,22 @@ namespace sqlite
 
 Database::Database(sqlite3* x) : db(x)
 {
-    
+
 }
 
 Database::~Database()
 {
-    sqlite3_close(db);    
+    sqlite3_close(db);
 }
 
 int32_t Database::count(const char* sql, ...)
 {
-    char *tmp;
+    char* tmp;
     va_list ap;
     va_start(ap, sql);
     tmp = sqlite3_vmprintf(sql, ap);
     va_end(ap);
-    
+
     Query query(db);
     query.prepare(tmp);
 
@@ -44,12 +44,12 @@ int32_t Database::count(const char* sql, ...)
 
 std::string Database::value(const char* sql, ...)
 {
-    char *tmp;
+    char* tmp;
     va_list ap;
     va_start(ap, sql);
     tmp = sqlite3_vmprintf(sql, ap);
     va_end(ap);
-    
+
     Query query(db);
 
     query.prepare(tmp);
@@ -59,7 +59,7 @@ std::string Database::value(const char* sql, ...)
 
     const char* field = (char*)sqlite3_column_text(query.stmt, 0);
 
-    if(field == NULL)
+    if (field == NULL)
     {
         return string();
     }
@@ -69,7 +69,7 @@ std::string Database::value(const char* sql, ...)
 
 int Database::execute(const char* sql, ...)
 {
-    char *err, *tmp;
+    char* err, *tmp;
 
     va_list ap;
     va_start(ap, sql);
@@ -78,7 +78,7 @@ int Database::execute(const char* sql, ...)
 
     int rc = sqlite3_exec(db, tmp, NULL, NULL, &err);
 
-    if(rc != SQLITE_OK)
+    if (rc != SQLITE_OK)
     {
         if (err != NULL)
         {
@@ -96,7 +96,7 @@ std::string Database::error(sqlite3* sdb, const char* msg, ...)
 {
     std::string text;
 
-    if(msg)
+    if (msg)
     {
         va_list ap;
         va_start(ap, msg);
@@ -108,13 +108,13 @@ std::string Database::error(sqlite3* sdb, const char* msg, ...)
     }
 
     text += sqlite3_errmsg(sdb);
-    
+
     return text;
 }
 
 Query::Query(sqlite3* handle) : db(handle), error_code(0), stmt(NULL)
 {
-    
+
 }
 
 Query::~Query()
@@ -124,7 +124,7 @@ Query::~Query()
 
 int Query::execute(const char* sql, ...)
 {
-    char *err, *tmp;
+    char* err, *tmp;
 
     va_list ap;
     va_start(ap, sql);
@@ -133,7 +133,7 @@ int Query::execute(const char* sql, ...)
 
     error_code = sqlite3_exec(db, tmp, NULL, NULL, &err);
 
-    if(error_code != SQLITE_OK)
+    if (error_code != SQLITE_OK)
     {
         if (err != NULL)
         {
@@ -149,15 +149,15 @@ int Query::execute(const char* sql, ...)
 
 bool Query::exists(const char* sql, ...)
 {
-    const char *tail;
-    char *tmp;
+    const char* tail;
+    char* tmp;
 
     va_list ap;
     va_start(ap, sql);
     tmp = sqlite3_vmprintf(sql, ap);
     va_end(ap);
 
-    if(stmt != NULL)
+    if (stmt != NULL)
     {
         finalize();
     }
@@ -167,7 +167,7 @@ bool Query::exists(const char* sql, ...)
 
     bool result = false;
 
-    if(error_code != SQLITE_OK)
+    if (error_code != SQLITE_OK)
     {
         result = false;
     }
@@ -181,15 +181,15 @@ bool Query::exists(const char* sql, ...)
 
 void Query::prepare(const char* sql, ...)
 {
-    const char *tail;
-    char *tmp;
+    const char* tail;
+    char* tmp;
 
     va_list ap;
     va_start(ap, sql);
     tmp = sqlite3_vmprintf(sql, ap);
     va_end(ap);
 
-    if(stmt != NULL)
+    if (stmt != NULL)
     {
         finalize();
     }
@@ -197,13 +197,13 @@ void Query::prepare(const char* sql, ...)
     error_code = sqlite3_prepare_v2(db, tmp, strlen(tmp), &stmt, &tail);
     sqlite3_free(tmp);
 
-    if(error_code != SQLITE_OK)
+    if (error_code != SQLITE_OK)
     {
         std::stringstream stream;
-        stream << " [" << error_code << "] " 
+        stream << " [" << error_code << "] "
                << "Query::prepare() failed --"
                << sqlite3_errmsg(db) << " SQL: " << sql;
-        
+
         std::runtime_error e(stream.str());
         throw e;
     }
@@ -216,7 +216,7 @@ int32_t Query::step()
 
 void Query::finalize()
 {
-    if(stmt != NULL)
+    if (stmt != NULL)
     {
         sqlite3_finalize(stmt);
         stmt = NULL;
@@ -227,7 +227,7 @@ std::string Query::error(const char* msg, ...)
 {
     std::string text;
 
-    if(msg)
+    if (msg)
     {
         va_list ap;
         va_start(ap, msg);
@@ -239,7 +239,7 @@ std::string Query::error(const char* msg, ...)
     }
 
     text += sqlite3_errmsg(db);
-    
+
     return text;
 }
 
