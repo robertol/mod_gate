@@ -9,10 +9,6 @@ assert('Time', '15.2.19') do
   Time.class == Class
 end
 
-assert('Time superclass', '15.2.19.2') do
-  Time.superclass == Object
-end
-
 assert('Time.at', '15.2.19.6.1') do
   Time.at(1300000000.0)
 end
@@ -206,4 +202,12 @@ assert('day of week methods') do
   assert_false t.thursday?
   assert_false t.friday?
   assert_false t.saturday?
+end
+
+assert('2000 times 500us make a second') do
+  t = Time.utc 2015
+  2000.times do
+    t += 0.0005
+  end
+  t.usec == 0
 end

@@ -1,0 +1,50 @@
+# Run as from site root as follows:
+#
+#     apache2 -X -f `pwd`/config/httpd.conf
+#
+# Test with something like:
+# 
+#     curl -X OPTIONS -d arg=val -d arg2=val2 localhost:9100
+
+Listen       9100
+User         owensmk
+Group        owensmk
+ServerAdmin  test@locahost
+ServerName   localhost
+DocumentRoot ${CMAKE_CURRENT_SOURCE_DIR}/test/site/content
+PidFile      ${CMAKE_CURRENT_SOURCE_DIR}/test/site/config/apache.pid
+
+LoadModule mpm_prefork_module /usr/lib/apache2/modules/mod_mpm_prefork.so
+LoadModule authz_host_module /usr/lib/apache2/modules/mod_authz_host.so
+LoadModule autoindex_module /usr/lib/apache2/modules/mod_autoindex.so
+LoadModule mime_module /usr/lib/apache2/modules/mod_mime.so
+LoadModule include_module /usr/lib/apache2/modules/mod_include.so
+LoadModule gate_module ${PROJECT_SOURCE_DIR}/src/mod_gate.so
+
+TypesConfig ${CMAKE_CURRENT_SOURCE_DIR}/site/config/mime.types
+
+<IfModule gate_module>
+    GateDeclare  GLOBAL
+    GateDatabase GLOBAL /usr/local/etc/apache24/gate.db
+</IfModule>
+
+AddOutputFilter Includes html
+AddOutputFilter Includes shtml
+AddOutputFilter Includes rhtml
+AddOutputFilter Includes rsp
+AddOutputFilter Includes php
+
+<Directory />
+    Options Indexes FollowSymLinks MultiViews Includes
+    AllowOverride None
+    Require all granted
+    <IfModule gate_module>
+        Gate GLOBAL
+    </IfModule>
+</Directory>
+
+CustomLog /tmp/access_log "%h %l %u %t \"%r\" %>s %b"
+ErrorLog  /tmp/error_log
+LogLevel  warn
+
+DefaultType text/plain

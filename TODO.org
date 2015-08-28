@@ -1,0 +1,11 @@
+
+* Cookie optimization
+
+  Once an IP has been approved, module sets a cookie with an access
+  token. Further lookups start by looking for this token in the cookie. If
+  module sees token, it skips the SQLite lookup and allows the request to
+  proceed. Token is a hash of remote IP and internally generated UUID. Therefore
+  client cannot guess token. UUID can be regenerated every hour or whatever time
+  frame (perhaps set in configuration). So cookies can go stale. This
+  optimization makes is such that only one query per hour (or UUID) is required
+  for a given IP.

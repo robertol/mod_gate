@@ -5,10 +5,6 @@ assert('Module', '15.2.2') do
   assert_equal Class, Module.class
 end
 
-assert('Module superclass', '15.2.2.2') do
-  assert_equal Object, Module.superclass
-end
-
 # TODO not implemented ATM assert('Module.constants', '15.2.2.3.1') do
 
 # TODO not implemented ATM assert('Module.nesting', '15.2.2.3.2') do
@@ -473,6 +469,7 @@ assert('Module#undef_method', '15.2.2.4.42') do
   assert_true Test4UndefMethod::Parent.new.respond_to?(:hello)
   assert_false Test4UndefMethod::Child.new.respond_to?(:hello)
   assert_false Test4UndefMethod::GrandChild.new.respond_to?(:hello)
+  assert_false Test4UndefMethod::Child.instance_methods(false).include? :hello
 end
 
 # Not ISO specified
@@ -525,4 +522,18 @@ assert('clone Module') do
   end
 
   B.new.foo
+end
+
+assert('Module#module_function') do
+  module M
+    def modfunc; end
+    module_function :modfunc
+  end
+
+  assert_true M.respond_to?(:modfunc)
+end
+
+assert('module with non-class/module outer raises TypeError') do
+  assert_raise(TypeError) { module 0::M1 end }
+  assert_raise(TypeError) { module []::M2 end }
 end

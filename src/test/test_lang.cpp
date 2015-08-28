@@ -67,6 +67,14 @@ TEST_F(UnitTest, SQLiteApi)
         cerr << vm.backtrace();
     }
 
+    /*
+    if(vm.loadExtensions() == false)
+    {
+        cerr << vm.error();
+        cerr << vm.backtrace();
+    }
+    */
+
     if(vm.executeFile("scripts/test_lang/io/1.rb") == false)
     {
         cerr << vm.error();

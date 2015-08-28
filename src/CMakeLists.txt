@@ -16,6 +16,9 @@ add_definitions( -fPIC -W -D_GNU_SOURCE -D_LARGEFILE64_SOURCE )
 set(RUBY_PATH ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mruby)
 set(RUBY_INCLUDE_PATH ${RUBY_PATH}/include)
 set(RUBY_LIBRARY ${RUBY_PATH}/build/host/lib/libmruby.a)
+#add_library(RUBY_LIBRARY STATIC IMPORTED)
+#set_target_properties(RUBY_LIBRARY PROPERTIES
+#    IMPORTED_LOCATION ${RUBY_PATH}/build/host/lib/libmruby.a )
 
 #-------------------------------------------------------------------------------
 # Compilation
@@ -58,13 +61,17 @@ set(PROJECT_NAME gate)
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in 
                 ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/test/site/config/httpd.conf.in 
+                ${CMAKE_CURRENT_SOURCE_DIR}/test/site/config/httpd.conf )
+
 # List of source files
 aux_source_directory( . library_sources )
 
 # Library targets
 
-# 1. Shared Library
+# 1. Shared Library. The mruby library is static so we add it
 add_library( shared_lib SHARED ${library_sources} )
+
 set_target_properties( shared_lib PROPERTIES
 
   # For Unix style library versions + symbolic links
@@ -79,13 +86,13 @@ set_target_properties( shared_lib PROPERTIES
   # Avoid conflicts between library and binary target names
   OUTPUT_NAME mod_${PROJECT_NAME} )
 
-target_link_libraries( shared_lib -L${CMAKE_LIBRARY_PATH} 
+target_link_libraries( shared_lib  
   ${RUBY_LIBRARY}
   ${SYSTEM_LINK_FLAGS}
   ${PREFIX}/lib/${GATE_LIBRARY} )
 
 # 2. Static library for testing
-add_library( static_lib STATIC ${library_sources} )
+add_library( static_lib STATIC ${library_sources} ${RUBY_LIBRARY})
 
 set_target_properties( static_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME} )
 
@@ -115,13 +122,14 @@ endif()
 
 # Shared lib version
 add_executable(gatedb gatedb.cpp sqlite.cpp getopt_long.c sqlite3.c)
-target_link_libraries(gatedb ${OS_LIBS} ${RUBY_LIBRARY})
+target_link_libraries(gatedb ${RUBY_LIBRARY} ${OS_LIBS} )
 
 #-------------------------------------------------------------------------------
 # Code Generation
 #-------------------------------------------------------------------------------
 
-ADD_CUSTOM_TARGET(miniruby cd ./thirdparty/mruby && ruby ./minirake build)
+#ADD_CUSTOM_TARGET(miniruby cd ./thirdparty/mruby && ruby ./minirake build)
+ADD_CUSTOM_TARGET(miniruby cd ./thirdparty/mruby && make)
 
 ADD_CUSTOM_TARGET(bytecode 
   ./thirdparty/mruby/bin/mrbc -B ruby_lib_bytecode -o ruby_lib_bytecode.c ruby/sqlite.rb )

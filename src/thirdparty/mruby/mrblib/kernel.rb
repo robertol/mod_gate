@@ -24,10 +24,10 @@ module Kernel
   # Calls the given block repetitively.
   #
   # ISO 15.3.1.3.29
-  def loop
-    return to_enum :loop unless block_given?
+  def loop(&block)
+    return to_enum :loop unless block
 
-    while(true)
+    while true
       yield
     end
   rescue StopIteration
@@ -37,6 +37,11 @@ module Kernel
   # 11.4.4 Step c)
   def !~(y)
     !(self =~ y)
+  end
+
+  # internal method for inspect
+  def _inspect
+    self.inspect
   end
 
   def to_enum(*a)

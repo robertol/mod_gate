@@ -34,7 +34,7 @@ class Array
     return to_enum :each_index unless block_given?
 
     idx = 0
-    while(idx < length)
+    while idx < length
       block.call(idx)
       idx += 1
     end
@@ -75,7 +75,7 @@ class Array
       self[size - 1] = nil  # allocate
 
       idx = 0
-      while(idx < size)
+      while idx < size
         self[idx] = (block)? block.call(idx): obj
         idx += 1
       end
@@ -84,13 +84,20 @@ class Array
     self
   end
 
+  def _inspect
+    return "[]" if self.size == 0
+    "["+self.map{|x|x.inspect}.join(", ")+"]"
+  end
   ##
-  # Private method for Array creation.
+  # Return the contents of this array as a string.
   #
   # ISO 15.2.12.5.31 (x)
   def inspect
-    return "[]" if self.size == 0
-    "["+self.map{|x|x.inspect}.join(", ")+"]"
+    begin
+      self._inspect
+    rescue SystemStackError
+      "[...]"
+    end
   end
   # ISO 15.2.12.5.32 (x)
   alias to_s inspect

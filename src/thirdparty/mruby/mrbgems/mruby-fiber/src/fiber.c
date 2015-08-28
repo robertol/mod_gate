@@ -69,6 +69,7 @@ fiber_init(mrb_state *mrb, mrb_value self)
   struct RProc *p;
   mrb_callinfo *ci;
   mrb_value blk;
+  size_t slen;
 
   mrb_get_args(mrb, "&", &blk);
 
@@ -85,9 +86,27 @@ fiber_init(mrb_state *mrb, mrb_value self)
   c = f->cxt;
 
   /* initialize VM stack */
-  c->stbase = (mrb_value *)mrb_calloc(mrb, FIBER_STACK_INIT_SIZE, sizeof(mrb_value));
-  c->stend = c->stbase + FIBER_STACK_INIT_SIZE;
+  slen = FIBER_STACK_INIT_SIZE;
+  if (p->body.irep->nregs > slen) {
+    slen += p->body.irep->nregs;
+  }
+  c->stbase = (mrb_value *)mrb_malloc(mrb, slen*sizeof(mrb_value));
+  c->stend = c->stbase + slen;
   c->stack = c->stbase;
+
+#ifdef MRB_NAN_BOXING
+  {
+    mrb_value *p = c->stbase;
+    mrb_value *pend = c->stend;
+
+    while (p < pend) {
+      SET_NIL_VALUE(*p);
+      p++;
+    }
+  }
+#else
+  memset(c->stbase, 0, slen * sizeof(mrb_value));
+#endif
 
   /* copy receiver from a block */
   c->stack[0] = mrb->c->stack[0];
@@ -148,7 +167,7 @@ fiber_switch(mrb_state *mrb, mrb_value self, mrb_int len, const mrb_value *a, mr
     }
   }
   if (resume && c->status == MRB_FIBER_TRANSFERRED) {
-    mrb_raise(mrb, E_FIBER_ERROR, "resuming transfered fiber");
+    mrb_raise(mrb, E_FIBER_ERROR, "resuming transferred fiber");
   }
   if (c->status == MRB_FIBER_RUNNING || c->status == MRB_FIBER_RESUMING) {
     mrb_raise(mrb, E_FIBER_ERROR, "double resume");
@@ -209,6 +228,13 @@ fiber_resume(mrb_state *mrb, mrb_value self)
   return fiber_switch(mrb, self, len, a, TRUE);
 }
 
+/* resume thread with given arguments */
+MRB_API mrb_value
+mrb_fiber_resume(mrb_state *mrb, mrb_value fib, mrb_int len, const mrb_value *a)
+{
+  return fiber_switch(mrb, fib, len, a, TRUE);
+}
+
 /*
  *  call-seq:
  *     fiber.alive? -> true or false
@@ -239,8 +265,8 @@ fiber_eq(mrb_state *mrb, mrb_value self)
  *  call-seq:
  *     fiber.transfer(args, ...) -> obj
  *
- *  Transfers control to reciever fiber of the method call.
- *  Unlike <code>resume</code> the reciever wouldn't be pushed to call
+ *  Transfers control to receiver fiber of the method call.
+ *  Unlike <code>resume</code> the receiver wouldn't be pushed to call
  * stack of fibers. Instead it will switch to the call stack of
  * transferring fiber.
  *  When resuming a fiber that was transferred to another fiber it would
@@ -261,6 +287,7 @@ fiber_transfer(mrb_state *mrb, mrb_value self)
     mrb->c = c;
     c->status = MRB_FIBER_RUNNING;
     MARK_CONTEXT_MODIFY(c);
+    mrb_write_barrier(mrb, (struct RBasic*)c->fib);
     return fiber_result(mrb, a, len);
   }
 
@@ -271,7 +298,9 @@ fiber_transfer(mrb_state *mrb, mrb_value self)
   return fiber_switch(mrb, self, len, a, FALSE);
 }
 
-mrb_value
+/* yield values to the caller fiber */
+/* mrb_fiber_yield() must be called as `return mrb_fiber_yield(...)` */
+MRB_API mrb_value
 mrb_fiber_yield(mrb_state *mrb, mrb_int len, const mrb_value *a)
 {
   struct mrb_context *c = mrb->c;
@@ -291,6 +320,7 @@ mrb_fiber_yield(mrb_state *mrb, mrb_int len, const mrb_value *a)
   mrb->c = c->prev;
   c->prev = NULL;
   MARK_CONTEXT_MODIFY(mrb->c);
+  mrb_write_barrier(mrb, (struct RBasic*)c->fib);
   return fiber_result(mrb, a, len);
 }
 

@@ -3,15 +3,9 @@
 #include "mruby/class.h"
 #include "mruby/string.h"
 #include "mruby/range.h"
+#include "mruby/numeric.h"
 #include "mruby/re.h"
-#include <ctype.h>
 #include <string.h>
-
-#define STR_EMBED_P(s) ((s)->flags & MRB_STR_EMBED)
-#define STR_EMBED_LEN(s)\
-  (mrb_int)(((s)->flags & MRB_STR_EMBED_LEN_MASK) >> MRB_STR_EMBED_LEN_SHIFT)
-#define STR_PTR(s) ((STR_EMBED_P(s)) ? (s)->as.ary : (s)->as.heap.ptr)
-#define STR_LEN(s) ((STR_EMBED_P(s)) ? STR_EMBED_LEN(s) : (mrb_int)(s)->as.heap.len)
 
 static const char utf8len_codepage[256] =
 {
@@ -25,7 +19,7 @@ static const char utf8len_codepage[256] =
   3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,1,1,1,1,1,1,1,1,1,1,1,
 };
 
-static char utf8len_codepage_zero[256] =
+static const char utf8len_codepage_zero[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -111,21 +105,6 @@ mrb_str_size(mrb_state *mrb, mrb_value str)
 }
 
 #define RSTRING_LEN_UTF8(s) mrb_utf8_strlen(s, -1)
-
-static mrb_value
-noregexp(mrb_state *mrb, mrb_value self)
-{
-  mrb_raise(mrb, E_NOTIMP_ERROR, "Regexp class not implemented");
-  return mrb_nil_value();
-}
-
-static void
-regexp_check(mrb_state *mrb, mrb_value obj)
-{
-  if (mrb_regexp_p(mrb, obj)) {
-    noregexp(mrb, obj);
-  }
-}
 
 static inline mrb_int
 mrb_memsearch_qs(const unsigned char *xs, mrb_int m, const unsigned char *ys, mrb_int n)
@@ -250,17 +229,17 @@ str_rindex(mrb_state *mrb, mrb_value str, mrb_value sub, mrb_int pos)
   mrb_int len = RSTRING_LEN(sub);
 
   /* substring longer than string */
-  if (STR_LEN(ps) < len) return -1;
-  if (STR_LEN(ps) - pos < len) {
-    pos = STR_LEN(ps) - len;
+  if (RSTR_LEN(ps) < len) return -1;
+  if (RSTR_LEN(ps) - pos < len) {
+    pos = RSTR_LEN(ps) - len;
   }
-  sbeg = STR_PTR(ps);
-  s = STR_PTR(ps) + pos;
+  sbeg = RSTR_PTR(ps);
+  s = RSTR_PTR(ps) + pos;
   t = RSTRING_PTR(sub);
   if (len) {
     while (sbeg <= s) {
       if (memcmp(s, t, len) == 0) {
-        return s - STR_PTR(ps);
+        return s - RSTR_PTR(ps);
       }
       s--;
     }
@@ -276,8 +255,10 @@ mrb_str_aref(mrb_state *mrb, mrb_value str, mrb_value indx)
 {
   mrb_int idx;
 
-  regexp_check(mrb, indx);
+  mrb_regexp_check(mrb, indx);
   switch (mrb_type(indx)) {
+    case MRB_TT_FLOAT:
+      indx = mrb_flo_to_fixnum(mrb, indx);
     case MRB_TT_FIXNUM:
       idx = mrb_fixnum(indx);
 
@@ -321,7 +302,7 @@ mrb_str_aref_m(mrb_state *mrb, mrb_value str)
 
   argc = mrb_get_args(mrb, "o|o", &a1, &a2);
   if (argc == 2) {
-    regexp_check(mrb, a1);
+    mrb_regexp_check(mrb, a1);
     return str_substr(mrb, str, mrb_fixnum(a1), mrb_fixnum(a2));
   }
   if (argc != 1) {
@@ -352,7 +333,7 @@ mrb_str_index_m(mrb_state *mrb, mrb_value str)
       sub = mrb_nil_value();
 
   }
-  regexp_check(mrb, sub);
+  mrb_regexp_check(mrb, sub);
   if (pos < 0) {
     pos += RSTRING_LEN(str);
     if (pos < 0) {
@@ -431,7 +412,7 @@ mrb_str_rindex_m(mrb_state *mrb, mrb_value str)
     if (pos < 0) {
       pos += len;
       if (pos < 0) {
-        regexp_check(mrb, sub);
+        mrb_regexp_check(mrb, sub);
         return mrb_nil_value();
       }
     }
@@ -444,7 +425,7 @@ mrb_str_rindex_m(mrb_state *mrb, mrb_value str)
     else
       sub = mrb_nil_value();
   }
-  regexp_check(mrb, sub);
+  mrb_regexp_check(mrb, sub);
 
   if (mrb_type(sub) == MRB_TT_FIXNUM) {
     sub = mrb_fixnum_chr(mrb, sub);
@@ -554,7 +535,7 @@ mrb_str_split_m(mrb_state *mrb, mrb_value str)
       }
     }
     else {
-      noregexp(mrb, str);
+      mrb_noregexp(mrb, str);
     }
   }
 
@@ -614,7 +595,7 @@ mrb_str_split_m(mrb_state *mrb, mrb_value str)
 
       while (ptr < eptr &&
         (end = mrb_memsearch(sptr, slen, ptr, eptr - ptr)) >= 0) {
-        //        mrb_ary_push(mrb, result, str_subseq(mrb, str, ptr - temp, end));
+        /*        mrb_ary_push(mrb, result, str_subseq(mrb, str, ptr - temp, end)); */
         mrb_ary_push(mrb, result, mrb_str_new(mrb, ptr, end));
         mrb_gc_arena_restore(mrb, ai);
         ptr += end + slen;
@@ -624,7 +605,7 @@ mrb_str_split_m(mrb_state *mrb, mrb_value str)
     beg = ptr - temp;
   }
   else {
-    noregexp(mrb, str);
+    mrb_noregexp(mrb, str);
   }
   if (RSTRING_LEN(str) > 0 && (lim_p || RSTRING_LEN(str) > beg || lim < 0)) {
     if (RSTRING_LEN(str) == beg) {
